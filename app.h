@@ -1,6 +1,7 @@
 #pragma once
 
 #include "task.h"
+#include "task_manager.h"
 #include "task_matrix.h"  // C++23: Multidimensional subscript support
 #include <string>
 #include <vector>

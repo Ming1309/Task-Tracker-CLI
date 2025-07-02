@@ -22,6 +22,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(TaskTracker
     main.cpp
     task.cpp
+    task_manager.cpp
     app.cpp
 )
 
