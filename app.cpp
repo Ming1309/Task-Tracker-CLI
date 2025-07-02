@@ -131,6 +131,30 @@ void App::initializeCommands() {
         .min_args = 0,
         .max_args = 1
     };
+    
+    _commands["matrix"] = Command{
+        .name = "matrix",
+        .description = "Show task matrix by category and priority (matrix)",
+        .handler = [this](const auto& args) { handleMatrix(args); },
+        .min_args = 0,
+        .max_args = 0
+    };
+    
+    _commands["get"] = Command{
+        .name = "get",
+        .description = "Get tasks by category and priority (get <category> <priority>)",
+        .handler = [this](const auto& args) { handleGet(args); },
+        .min_args = 2,
+        .max_args = 2
+    };
+    
+    _commands["recent"] = Command{
+        .name = "recent",
+        .description = "Show recent commands (recent)",
+        .handler = [this](const auto& args) { handleRecent(args); },
+        .min_args = 0,
+        .max_args = 0
+    };
 }
 
 void App::run() {
@@ -153,19 +177,25 @@ void App::run() {
         const std::string& command = tokens[0];
         std::vector<std::string> args(tokens.begin() + 1, tokens.end());
         
-        auto cmd_it = _commands.find(command);
-        if (cmd_it == _commands.end()) {
+        // C++23: Validate command using .contains()
+        if (!validateCommand(command)) {
             std::cout << "❌ Unknown command: " << command << "\n";
             std::cout << "💡 Type 'help' to see available commands.\n";
             continue;
         }
         
-        const Command& cmd = cmd_it->second;
+        const Command& cmd = _commands[command];
         if (args.size() < cmd.min_args || args.size() > cmd.max_args) {
             std::print("❌ Invalid number of arguments for '{}'\n", command);
             std::print("📋 Usage: {}\n", cmd.description);
             continue;
         }
+        
+        // C++23: Track recent commands with auto(x) decay copy
+        if (_recent_commands.size() >= MAX_RECENT_COMMANDS) {
+            _recent_commands.erase(_recent_commands.begin());
+        }
+        _recent_commands.push_back(auto(command));  // Clean copy
         
         // C++23: std::expected pattern - commands handle their own errors
         cmd.handler(args);
@@ -381,7 +411,8 @@ void App::handleStats(const std::vector<std::string>& args) {
 void App::handleFind(const std::vector<std::string>& args) {
     const std::string& keyword = args[0];
     
-    auto matching_tasks = _task_manager.filterTasks([&keyword](const Task& task) {
+    // C++23: auto(x) decay copy for safer lambda captures
+    auto filterTasks = [keyword = auto(keyword)](const Task& task) {
         const std::string& title = task.getTitle();
         const std::string& desc = task.getDescription();
         
@@ -396,7 +427,9 @@ void App::handleFind(const std::vector<std::string>& args) {
         std::string lower_desc = to_lower(desc);
         
         return lower_title.contains(lower_keyword) || lower_desc.contains(lower_keyword);
-    });
+    };
+    
+    auto matching_tasks = _task_manager.filterTasks(filterTasks);
     
     auto task_vector = std::vector<Task>(matching_tasks.begin(), matching_tasks.end());
     
@@ -821,4 +854,81 @@ void App::handleError(TaskError error) const {
 
 void App::printTaskDetails(const Task& task) const {
     std::cout << task.to_string() << "\n";
+}
+
+// C++23: New handlers using multidimensional subscript and other features
+void App::handleMatrix(const std::vector<std::string>& args) {
+    // Rebuild matrix from current tasks
+    _task_matrix.clear();
+    
+    // C++23: auto(x) decay copy for clean iteration
+    for (const auto& task : _task_manager.getAllTasks()) {
+        _task_matrix.addTask(auto(task));  // Clean copy
+    }
+    
+    if (_task_matrix.getTotalTaskCount() == 0uz) {  // C++23: uz suffix
+        std::print("📭 No tasks to display in matrix\n");
+        return;
+    }
+    
+    _task_matrix.displayMatrix();
+    
+    // Display statistics
+    std::print("\n📈 Matrix Statistics:\n");
+    std::print("  📊 Total tasks: {}\n", _task_matrix.getTotalTaskCount());
+    std::print("  📂 Categories: {}\n", _task_matrix.getCategories().size());
+}
+
+void App::handleGet(const std::vector<std::string>& args) {
+    const std::string& category = args[0];
+    
+    auto priority_result = parseInteger(args[1]);
+    if (!priority_result) {
+        std::print("❌ {}\n", parseErrorToString(priority_result.error()));
+        return;
+    }
+    
+    int priority = *priority_result;
+    
+    // Rebuild matrix
+    _task_matrix.clear();
+    for (const auto& task : _task_manager.getAllTasks()) {
+        _task_matrix.addTask(task);
+    }
+    
+    // C++23: Multidimensional subscript operator [category, priority]
+    const auto& tasks = _task_matrix[category, priority];
+    
+    if (tasks.empty()) {
+        std::print("📭 No tasks found for category '{}' with priority {}\n", 
+                   category, priority);
+        return;
+    }
+    
+    std::print("🎯 Tasks in category '{}' with priority {}:\n", category, priority);
+    std::print("===============================================\n");
+    
+    for (const auto& task : tasks) {
+        std::print("  [{}] {} - {}\n", 
+                   task.getId(), 
+                   task.getTitle(), 
+                   getTaskStatusString(task.getStatus()));  // C++23: consteval function
+    }
+    
+    std::print("\n📊 Found {} task(s)\n", tasks.size());
+}
+
+void App::handleRecent(const std::vector<std::string>& args) {
+    if (_recent_commands.empty()) {
+        std::print("📭 No recent commands\n");
+        return;
+    }
+    
+    std::print("🕐 Recent Commands:\n");
+    std::print("==================\n");
+    
+    // C++23: uz suffix and ranges
+    for (size_t i = 0uz; i < std::min(_recent_commands.size(), MAX_RECENT_COMMANDS); ++i) {
+        std::print("  {}. {}\n", i + 1, _recent_commands[i]);
+    }
 }

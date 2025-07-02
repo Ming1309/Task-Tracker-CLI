@@ -217,3 +217,65 @@ JsonResult deserializeTaskFromJson(Task& task, const std::string& filePath);
 
 // JSON utility functions
 std::string unescapeJsonString(const std::string& str);
+
+// C++23 Feature: consteval functions for compile-time validation
+consteval bool isValidPriority(int priority) {
+    return priority >= 0 && priority <= 10;
+}
+
+consteval bool isValidTaskId(int id) {
+    return id > 0;
+}
+
+consteval size_t maxTaskTitleLength() {
+    return 100uz;  // C++23: uz suffix for size_t
+}
+
+consteval size_t maxTaskDescriptionLength() {
+    return 500uz;
+}
+
+// C++23 Feature: if consteval for optimized string processing
+constexpr std::string_view getTaskStatusString(TaskStatus status) {
+    if consteval {
+        // Compile-time: Simple lookup
+        switch (status) {
+            case TaskStatus::Pending: return "Pending";
+            case TaskStatus::InProgress: return "InProgress";
+            case TaskStatus::Completed: return "Completed";
+            case TaskStatus::Cancelled: return "Cancelled";
+        }
+        return "Unknown";
+    } else {
+        // Runtime: More flexible processing
+        switch (status) {
+            case TaskStatus::Pending: return "⏳ Pending";
+            case TaskStatus::InProgress: return "🚧 In Progress";
+            case TaskStatus::Completed: return "✅ Completed";
+            case TaskStatus::Cancelled: return "❌ Cancelled";
+            default: return "❓ Unknown";
+        }
+    }
+}
+
+// C++23 Feature: if consteval for performance optimization
+constexpr bool validateTaskData(std::string_view title, std::string_view description, int priority) {
+    if consteval {
+        // Compile-time validation (basic checks)
+        return !title.empty() && 
+               title.length() <= maxTaskTitleLength() &&
+               description.length() <= maxTaskDescriptionLength() &&
+               priority >= 0 && priority <= 10;  // Direct check instead of consteval call
+    } else {
+        // Runtime validation (more comprehensive)
+        if (title.empty()) return false;
+        if (title.length() > maxTaskTitleLength()) return false;
+        if (description.length() > maxTaskDescriptionLength()) return false;
+        if (priority < 0 || priority > 10) return false;  // Direct check
+        
+        // Runtime-only checks
+        if (title.front() == ' ' || title.back() == ' ') return false;
+        
+        return true;
+    }
+}
