@@ -87,7 +87,7 @@ void Task::markCompleted() {
 }
 
 // TaskManager implementation
-TaskResult TaskManager::addTask(const std::string& title, const std::string& description) {
+TaskAddResult TaskManager::addTask(const std::string& title, const std::string& description) {
     if (title.empty()) {
         return std::unexpected(TaskError::EmptyTitle);
     }
@@ -101,8 +101,9 @@ TaskResult TaskManager::addTask(const std::string& title, const std::string& des
         return std::unexpected(TaskError::DuplicateTask);
     }
     
-    _tasks.emplace_back(_next_id++, title, description);
-    return true;
+    int new_id = _next_id++;
+    _tasks.emplace_back(new_id, title, description);
+    return new_id;  // C++23: Return the ID of the newly created task
 }
 
 TaskResult TaskManager::removeTask(int id) {
@@ -324,8 +325,9 @@ std::string timePointToIsoString(const std::chrono::system_clock::time_point& tp
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
     
     std::ostringstream oss;
-    oss << std::put_time(std::gmtime(&time_t), "%Y-%m-%dT%H:%M:%S");
-    oss << std::format(".{:03d}Z", ms.count());
+    // Fix: Use localtime instead of gmtime to show local timezone
+    oss << std::put_time(std::localtime(&time_t), "%Y-%m-%dT%H:%M:%S");
+    oss << std::format(".{:03d}", ms.count()); // Remove Z suffix for local time
     return oss.str();
 }
 

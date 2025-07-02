@@ -25,14 +25,8 @@ add_executable(TaskTracker
     app.cpp
 )
 
-# Add test executable for C++23 demos
-# add_executable(TestCpp23
-#     test.cpp
-# )
-
 # Link libraries if needed
 target_link_libraries(TaskTracker)
-# target_link_libraries(TestCpp23)
 
 # Set target properties for both executables
 set_target_properties(TaskTracker PROPERTIES
@@ -41,11 +35,6 @@ set_target_properties(TaskTracker PROPERTIES
     CXX_EXTENSIONS OFF
 )
 
-# set_target_properties(TestCpp23 PROPERTIES
-#     CXX_STANDARD 23
-#     CXX_STANDARD_REQUIRED ON
-#     CXX_EXTENSIONS OFF
-# )
 
 # Set target properties
 set_target_properties(TaskTracker PROPERTIES

@@ -16,7 +16,6 @@
 #include <fstream>
 #include <sstream>
 
-// C++23 Technique 1: Enhanced enum classes with underlying type deduction
 enum class TaskStatus : std::uint8_t {
     Pending,
     InProgress, 
@@ -24,7 +23,6 @@ enum class TaskStatus : std::uint8_t {
     Cancelled
 };
 
-// C++23 Technique 2: Concepts for type constraints
 template<typename T>
 concept Stringable = requires(T t) {
     { t.to_string() } -> std::convertible_to<std::string>;
@@ -37,7 +35,6 @@ concept TaskLike = requires(T t) {
     { t.getStatus() } -> std::convertible_to<TaskStatus>;
 };
 
-// C++23 Technique 3: std::expected for error handling
 enum class TaskError {
     InvalidId,
     TaskNotFound,
@@ -56,9 +53,9 @@ enum class JsonError {
 
 using TaskResult = std::expected<bool, TaskError>;
 using TaskOptional = std::expected<class Task, TaskError>;
+using TaskAddResult = std::expected<int, TaskError>;  // C++23: Returns task ID on success
 using JsonResult = std::expected<bool, JsonError>;
 
-// C++23 Technique 4: Enhanced structured bindings with pack expansion
 struct TaskMetadata {
     std::chrono::system_clock::time_point created_at;
     std::chrono::system_clock::time_point updated_at;
@@ -93,23 +90,34 @@ private:
     TaskMetadata _metadata;
     
 public:
-    // C++23 Technique 5: Defaulted comparison operators with auto
     Task(int id, std::string title, std::string description = "", 
          TaskStatus status = TaskStatus::Pending);
     
-    // C++23 Technique 6: Modern getter methods (explicit object parameter simulation)
-    int getId() const { return _id; }
-    const std::string& getTitle() const { return _title; }
-    const std::string& getDescription() const { return _description; }
-    TaskStatus getStatus() const { return _status; }
-    const TaskMetadata& getMetadata() const { return _metadata; }
+    // C++23: Deducing this - eliminates const/non-const duplication
+    template<typename Self>
+    auto getId(this Self&& self) -> decltype(auto) {
+        return (std::forward<Self>(self)._id);
+    }
     
-    // Non-const versions
-    int& getId() { return _id; }
-    std::string& getTitle() { return _title; }
-    std::string& getDescription() { return _description; }
-    TaskStatus& getStatus() { return _status; }
-    TaskMetadata& getMetadata() { return _metadata; }
+    template<typename Self>
+    auto getTitle(this Self&& self) -> decltype(auto) {
+        return (std::forward<Self>(self)._title);
+    }
+    
+    template<typename Self>
+    auto getDescription(this Self&& self) -> decltype(auto) {
+        return (std::forward<Self>(self)._description);
+    }
+    
+    template<typename Self>
+    auto getStatus(this Self&& self) -> decltype(auto) {
+        return (std::forward<Self>(self)._status);
+    }
+    
+    template<typename Self>
+    auto getMetadata(this Self&& self) -> decltype(auto) {
+        return (std::forward<Self>(self)._metadata);
+    }
     
     // Setters with validation
     TaskResult setTitle(const std::string& title);
@@ -118,10 +126,8 @@ public:
     TaskResult setPriority(int priority);
     TaskResult setCategory(const std::string& category);
     
-    // C++23 Technique 7: std::format integration (ready for std::print when available)
     std::string to_string() const;
     
-    // C++23 Technique 8: Custom comparison operators
     bool operator==(const Task& other) const {
         return _id == other._id && _title == other._title && _status == other._status;
     }
@@ -142,19 +148,17 @@ public:
     static std::expected<Task, JsonError> fromJson(const std::string& json_str);
 };
 
-// C++23 Technique 9: Ranges and views integration
 class TaskManager {
 private:
     std::vector<Task> _tasks;
     int _next_id = 1;
     
 public:
-    TaskResult addTask(const std::string& title, const std::string& description = "");
+    TaskAddResult addTask(const std::string& title, const std::string& description = "");
     TaskResult removeTask(int id);
     TaskOptional getTask(int id);
     TaskResult updateTaskStatus(int id, TaskStatus status);
     
-    // C++23 Technique 10: Enhanced lambda expressions with template parameters
     template<std::predicate<const Task&> Predicate>
     auto filterTasks(Predicate&& pred) const {
         return _tasks | std::views::filter(std::forward<Predicate>(pred));
@@ -184,8 +188,25 @@ public:
         return sorted_tasks;
     }
     
-    size_t getTaskCount() const { return _tasks.size(); }
-    const std::vector<Task>& getAllTasks() const { return _tasks; }
+    // C++23: Deducing this for task access
+    template<typename Self>
+    auto getTaskCount(this Self&& self) -> size_t { 
+        return self._tasks.size(); 
+    }
+    
+    template<typename Self>
+    auto getAllTasks(this Self&& self) -> decltype(auto) { 
+        return (std::forward<Self>(self)._tasks);
+    }
+    
+    // Task access with deducing this
+    template<typename Self>
+    auto getTaskByIndex(this Self&& self, size_t index) -> decltype(auto) {
+        if (index >= self._tasks.size()) {
+            throw std::out_of_range("Task index out of range");
+        }
+        return (std::forward<Self>(self)._tasks[index]);
+    }
     
     // Statistics
     size_t getCompletedTasksCount() const;

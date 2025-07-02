@@ -247,7 +247,7 @@ void App::handleAdd(const std::vector<std::string>& args) {
     
     auto result = _task_manager.addTask(title, description);
     if (result) {
-        std::cout << std::format("✅ Task '{}' added successfully!\n", title);
+        std::cout << std::format("✅ Task '{}' added successfully with ID = {}\n", title, *result);
     } else {
         handleError(result.error());
     }
@@ -343,8 +343,8 @@ void App::handlePriority(const std::vector<std::string>& args) {
         return;
     }
     
-    // Get mutable reference to task in manager
-    auto& tasks = const_cast<std::vector<Task>&>(_task_manager.getAllTasks());
+    // Get mutable reference to task in manager - no const_cast needed with deducing this
+    auto& tasks = _task_manager.getAllTasks();
     auto it = std::ranges::find_if(tasks, [id](Task& task) {
         return task.getId() == id;
     });
@@ -375,8 +375,8 @@ void App::handleCategory(const std::vector<std::string>& args) {
         return;
     }
     
-    // Get mutable reference to task in manager
-    auto& tasks = const_cast<std::vector<Task>&>(_task_manager.getAllTasks());
+    // Get mutable reference to task in manager - no const_cast needed with deducing this
+    auto& tasks = _task_manager.getAllTasks();
     auto it = std::ranges::find_if(tasks, [id](Task& task) {
         return task.getId() == id;
     });
@@ -636,9 +636,9 @@ void App::displayJsonAsTable(const std::string& json_content) {
     std::cout << std::format("\n📋 Tasks ({} total):\n", tasks.size());
     
     // Table header
-    std::cout << "┌────┬─────────────────────┬─────────────┬─────────────┬──────────┬────────────────────┐\n";
-    std::cout << "│ ID │ Title               │ Status      │ Category    │ Priority │ Created At         │\n";
-    std::cout << "├────┼─────────────────────┼─────────────┼─────────────┼──────────┼────────────────────┤\n";
+    std::cout << "┌────┬─────────────────────┬─────────────┬─────────────┬──────────┬─────────────────────┐\n";
+    std::cout << "│ ID │ Title               │ Status      │ Category    │ Priority │ Created At          │\n";
+    std::cout << "├────┼─────────────────────┼─────────────┼─────────────┼──────────┼─────────────────────┤\n";
     
     // Table rows
     for (const auto& task : tasks) {
@@ -647,17 +647,17 @@ void App::displayJsonAsTable(const std::string& json_content) {
         std::string truncated_category = task.category.length() > 11 ? 
             task.category.substr(0, 8) + "..." : task.category;
         
-        std::cout << std::format("│{:>3} │ {:<19} │ {:<11} │ {:<11} │{:>9} │ {:<18} │\n",
+        std::cout << std::format("│{:>3} │ {:<19} │ {:<11} │ {:<11} │{:>9} │ {:<19} │\n",
             task.id,
             truncated_title,
             task.status,
             truncated_category,
             task.priority,
-            task.created_at.substr(0, 18) // Show date without milliseconds
+            task.created_at.substr(0, 19) // Show date with seconds (19 chars for YYYY-MM-DDTHH:MM:SS)
         );
     }
     
-    std::cout << "└────┴─────────────────────┴─────────────┴─────────────┴──────────┴────────────────────┘\n";
+    std::cout << "└────┴─────────────────────┴─────────────┴─────────────┴──────────┴─────────────────────┘\n";
     
     // Summary statistics
     int pending = 0, completed = 0, in_progress = 0, cancelled = 0;
