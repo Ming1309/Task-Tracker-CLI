@@ -1,10 +1,23 @@
+/**
+ * @file task.cpp
+ * @brief Implementation of Task class and related utility functions
+ * @details Contains the implementation of Task methods, JSON serialization,
+ *          and utility functions for task management.
+ */
+
 #include "task.h"
 #include "task_manager.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 
-// Task constructor
+/**
+ * @brief Constructs a Task object with specified properties
+ * @param id Unique identifier for the task
+ * @param title Title of the task
+ * @param description Description of the task
+ * @param status Initial status of the task
+ */
 Task::Task(int id, std::string title, std::string description, TaskStatus status)
     : _id(id), _title(std::move(title)), _description(std::move(description)), _status(status) {
     auto now = std::chrono::system_clock::now();
@@ -13,7 +26,11 @@ Task::Task(int id, std::string title, std::string description, TaskStatus status
     _metadata.category = "General";
 }
 
-// Task methods implementation
+/**
+ * @brief Sets the task's title
+ * @param title New title for the task
+ * @return TaskResult with success or error
+ */
 TaskResult Task::setTitle(const std::string& title) {
     if (title.empty()) {
         return std::unexpected(TaskError::EmptyTitle);
@@ -23,12 +40,23 @@ TaskResult Task::setTitle(const std::string& title) {
     return true;
 }
 
+/**
+ * @brief Sets the task's description
+ * @param description New description for the task
+ * @return TaskResult with success
+ */
 TaskResult Task::setDescription(const std::string& description) {
     _description = description;
     _metadata.updated_at = std::chrono::system_clock::now();
     return true;
 }
 
+/**
+ * @brief Sets the task's status
+ * @param status New status for the task
+ * @return TaskResult with success
+ * @details If status is Completed, also sets the completed_at timestamp
+ */
 TaskResult Task::setStatus(TaskStatus status) {
     _status = status;
     _metadata.updated_at = std::chrono::system_clock::now();
@@ -40,6 +68,11 @@ TaskResult Task::setStatus(TaskStatus status) {
     return true;
 }
 
+/**
+ * @brief Sets the task's priority
+ * @param priority New priority for the task (0-10)
+ * @return TaskResult with success or error if priority is invalid
+ */
 TaskResult Task::setPriority(int priority) {
     // Validate priority range (0-10)
     if (priority < 0 || priority > 10) {
@@ -51,12 +84,22 @@ TaskResult Task::setPriority(int priority) {
     return true;
 }
 
+/**
+ * @brief Sets the task's category
+ * @param category New category for the task
+ * @return TaskResult with success
+ */
 TaskResult Task::setCategory(const std::string& category) {
     _metadata.category = category;
     _metadata.updated_at = std::chrono::system_clock::now();
     return true;
 }
 
+/**
+ * @brief Creates a formatted string representation of the task
+ * @return String containing all task details
+ * @details Uses C++23 std::format for string formatting
+ */
 std::string Task::to_string() const {
     // C++23 std::format usage (ready to migrate to std::print when available)
     auto created_time = std::chrono::system_clock::to_time_t(_metadata.created_at);
@@ -80,21 +123,36 @@ std::string Task::to_string() const {
     return oss.str();
 }
 
+/**
+ * @brief Check if the task is completed
+ * @return true if the task status is Completed
+ */
 bool Task::isCompleted() const {
     return _status == TaskStatus::Completed;
 }
 
+/**
+ * @brief Calculate the age of the task
+ * @return Duration since task creation
+ */
 std::chrono::duration<double> Task::getAge() const {
     return std::chrono::system_clock::now() - _metadata.created_at;
 }
 
+/**
+ * @brief Mark the task as completed
+ * @details Sets status to Completed and updates completed_at timestamp
+ */
 void Task::markCompleted() {
     setStatus(TaskStatus::Completed);
 }
 
 // TaskManager implementation moved to task_manager.cpp
 
-// Demo function to showcase C++23 features
+/**
+ * @brief Demo function to showcase C++23 features
+ * @details Creates and manipulates tasks using modern C++23 features
+ */
 void demonstrateC23Features() {
     std::cout << "\n🎯 Demonstrating C++23 Features:\n";
     std::cout << "================================\n";
@@ -153,7 +211,11 @@ void demonstrateC23Features() {
     std::cout << "\n✨ All C++23 features demonstrated successfully!\n\n";
 }
 
-// JSON Utility Functions
+/**
+ * @brief Convert JSON error enum to string
+ * @param error The JSON error code
+ * @return Human-readable error message
+ */
 std::string jsonErrorToString(JsonError error) {
     switch (error) {
         case JsonError::FileNotFound: return "JSON file not found";
@@ -164,7 +226,12 @@ std::string jsonErrorToString(JsonError error) {
     }
 }
 
-// Utility function to escape JSON strings
+/**
+ * @brief Escape special characters in a string for JSON encoding
+ * @param str The input string to escape
+ * @return JSON-safe escaped string
+ * @details Handles quotes, backslashes, control characters, and UTF-8
+ */
 std::string escapeJsonString(const std::string& str) {
     std::string escaped;
     escaped.reserve(str.size() + 20); // Reserve some extra space for escapes
@@ -192,7 +259,11 @@ std::string escapeJsonString(const std::string& str) {
     return escaped;
 }
 
-// Utility function to unescape JSON strings
+/**
+ * @brief Unescape JSON string by converting escape sequences to characters
+ * @param str The JSON string to unescape
+ * @return Unescaped string
+ */
 std::string unescapeJsonString(const std::string& str) {
     std::string unescaped;
     unescaped.reserve(str.size());
@@ -216,7 +287,11 @@ std::string unescapeJsonString(const std::string& str) {
     return unescaped;
 }
 
-// Convert time_point to ISO 8601 string
+/**
+ * @brief Convert time_point to ISO 8601 formatted string
+ * @param tp The time point to convert
+ * @return ISO 8601 formatted string (YYYY-MM-DDTHH:MM:SS.mmm)
+ */
 std::string timePointToIsoString(const std::chrono::system_clock::time_point& tp) {
     auto time_t = std::chrono::system_clock::to_time_t(tp);
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
@@ -228,7 +303,12 @@ std::string timePointToIsoString(const std::chrono::system_clock::time_point& tp
     return oss.str();
 }
 
-// Parse ISO 8601 string to time_point
+/**
+ * @brief Parse ISO 8601 formatted string to time_point
+ * @param iso_str The ISO 8601 string to parse
+ * @return Corresponding time_point
+ * @details Handles millisecond precision if present
+ */
 std::chrono::system_clock::time_point isoStringToTimePoint(const std::string& iso_str) {
     std::tm tm = {};
     std::istringstream ss(iso_str);
@@ -249,7 +329,11 @@ std::chrono::system_clock::time_point isoStringToTimePoint(const std::string& is
     return tp;
 }
 
-// Task JSON serialization implementation
+/**
+ * @brief Convert Task to JSON string representation
+ * @return Formatted JSON string with all task properties
+ * @details Uses C++23 std::format for string formatting
+ */
 std::string Task::toJson() const {
     std::ostringstream json;
     json << "{\n";
@@ -270,7 +354,12 @@ std::string Task::toJson() const {
     return json.str();
 }
 
-// Simple JSON parser for Task objects
+/**
+ * @brief Create a Task from a JSON string
+ * @param json_str JSON string to parse
+ * @return Task object if successful, or JsonError if parsing failed
+ * @details C++23 Feature: Uses std::expected for error handling
+ */
 std::expected<Task, JsonError> Task::fromJson(const std::string& json_str) {
     try {
         // Simple JSON parsing - in production, use a proper JSON library
@@ -362,7 +451,11 @@ std::expected<Task, JsonError> Task::fromJson(const std::string& json_str) {
 
 // TaskManager JSON serialization implementation moved to task_manager.cpp
 
-// Utility functions
+/**
+ * @brief Convert TaskStatus enum to string representation
+ * @param status The status to convert
+ * @return String representation of the status
+ */
 std::string taskStatusToString(TaskStatus status) {
     switch (status) {
         case TaskStatus::Pending: return "Pending";
@@ -373,6 +466,12 @@ std::string taskStatusToString(TaskStatus status) {
     }
 }
 
+/**
+ * @brief Convert string to TaskStatus enum
+ * @param str The string to convert
+ * @return TaskStatus if valid, nullopt if invalid
+ * @details Case-insensitive and handles common status name variations
+ */
 std::optional<TaskStatus> stringToTaskStatus(const std::string& str) {
     if (str == "pending" || str == "Pending") return TaskStatus::Pending;
     if (str == "progress" || str == "in-progress" || str == "In Progress") return TaskStatus::InProgress;
@@ -381,6 +480,11 @@ std::optional<TaskStatus> stringToTaskStatus(const std::string& str) {
     return std::nullopt;
 }
 
+/**
+ * @brief Convert TaskError enum to string representation
+ * @param error The error to convert
+ * @return Human-readable error message
+ */
 std::string taskErrorToString(TaskError error) {
     switch (error) {
         case TaskError::InvalidId: return "Invalid task ID";

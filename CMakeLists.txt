@@ -23,6 +23,7 @@ add_executable(TaskTracker
     main.cpp
     task.cpp
     task_manager.cpp
+    task_matrix.cpp
     app.cpp
 )
 

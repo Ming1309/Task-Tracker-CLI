@@ -1,4 +1,11 @@
-#pragma once
+#ifndef TASK_MATRIX_H
+#define TASK_MATRIX_H
+
+/**
+ * @file task_matrix.h
+ * @brief Defines the TaskMatrix class for organizing tasks by category and priority
+ * @details Uses C++23 features like flat_map, deducing this, and multidimensional subscript operators
+ */
 
 #include "task.h"
 #include <flat_map>         // C++23: std::flat_map for better cache locality
@@ -6,15 +13,30 @@
 #include <vector>
 #include <string>
 
-// C++23 Feature: Multidimensional Subscript Operator with flat_map optimization
-// TaskMatrix for organizing tasks by [category][priority] using contiguous memory layout
+/**
+ * @class TaskMatrix
+ * @brief Matrix for organizing tasks by category and priority
+ * @details C++23 Feature: Multidimensional Subscript Operator with flat_map optimization
+ *          for better cache locality and performance
+ */
 class TaskMatrix {
 private:
-    // C++23: Using flat_map for better cache locality and iteration performance
+    /**
+     * @brief Two-dimensional map of tasks organized by category and priority
+     * @details C++23: Uses flat_map for better cache locality and iteration performance
+     */
     std::flat_map<std::string, std::flat_map<int, std::vector<Task>>> matrix;
     
 public:
-    // C++23: Multidimensional subscript operator with deducing this
+    /**
+     * @brief Multidimensional subscript operator for accessing tasks by category and priority
+     * @details C++23: Uses deducing this to handle both const and non-const access
+     * 
+     * @tparam Self Deduced self type (const or non-const)
+     * @param category The category name
+     * @param priority The priority level
+     * @return Reference to vector of tasks (creates if non-const, returns empty if const and not found)
+     */
     template<typename Self>
     decltype(auto) operator[](this Self&& self, const std::string& category, int priority) {
         if constexpr (std::is_const_v<std::remove_reference_t<Self>>) {
@@ -33,58 +55,44 @@ public:
         }
     }
     
-    // Traditional single-dimension access with deducing this
+    /**
+     * @brief Traditional single-dimension access operator (by category)
+     * @details C++23: Uses deducing this to handle both const and non-const access
+     * 
+     * @tparam Self Deduced self type (const or non-const)
+     * @param category The category name
+     * @return Reference to category's priority map
+     */
     template<typename Self>
     decltype(auto) operator[](this Self&& self, const std::string& category) {
         return (std::forward<Self>(self).matrix[category]);
     }
     
-    // Add task to matrix
-    void addTask(const Task& task) {
-        const std::string& category = task.getMetadata().category.empty() ? 
-            "Default" : task.getMetadata().category;
-        int priority = task.getMetadata().priority;
-        
-        matrix[category][priority].push_back(task);
-    }
+    /**
+     * @brief Add a task to the matrix in its appropriate category and priority
+     * @param task The task to add
+     */
+    void addTask(const Task& task);
     
-    // Remove task from matrix
-    bool removeTask(int task_id) {
-        for (auto it = matrix.begin(); it != matrix.end(); ++it) {
-            auto& priority_map = it->second;
-            for (auto pit = priority_map.begin(); pit != priority_map.end(); ++pit) {
-                auto& tasks = pit->second;
-                auto task_it = std::find_if(tasks.begin(), tasks.end(),
-                    [task_id](const Task& t) { return t.getId() == task_id; });
-                if (task_it != tasks.end()) {
-                    tasks.erase(task_it);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    /**
+     * @brief Remove a task from the matrix by its ID
+     * @param task_id ID of the task to remove
+     * @return true if task was found and removed, false otherwise
+     */
+    bool removeTask(int task_id);
     
-    // Get all categories
-    std::vector<std::string> getCategories() const {
-        std::vector<std::string> categories;
-        for (auto it = matrix.begin(); it != matrix.end(); ++it) {
-            categories.push_back(it->first);
-        }
-        return categories;
-    }
+    /**
+     * @brief Get a list of all categories in the matrix
+     * @return Vector of category names
+     */
+    std::vector<std::string> getCategories() const;
     
-    // Get priorities for a category
-    std::vector<int> getPriorities(const std::string& category) const {
-        std::vector<int> priorities;
-        auto it = matrix.find(category);
-        if (it != matrix.end()) {
-            for (auto pit = it->second.begin(); pit != it->second.end(); ++pit) {
-                priorities.push_back(pit->first);
-            }
-        }
-        return priorities;
-    }
+    /**
+     * @brief Get a list of all priorities used within a category
+     * @param category The category name to look up
+     * @return Vector of priority levels
+     */
+    std::vector<int> getPriorities(const std::string& category) const;
     
     // Get task count for [category, priority] with deducing this
     template<typename Self>
@@ -103,30 +111,17 @@ public:
         }
     }
     
-    // Display matrix structure
-    void displayMatrix() const {
-        std::print("\n📊 Task Matrix Structure:\n");
-        std::print("=========================\n");
-        
-        for (auto it = matrix.begin(); it != matrix.end(); ++it) {
-            const auto& category = it->first;
-            const auto& priority_map = it->second;
-            std::print("📂 Category: {}\n", category);
-            for (auto pit = priority_map.begin(); pit != priority_map.end(); ++pit) {
-                const auto& priority = pit->first;
-                const auto& tasks = pit->second;
-                std::print("  🎯 Priority {}: {} task(s)\n", priority, tasks.size());
-                for (const auto& task : tasks) {
-                    std::print("    [{}] {}\n", task.getId(), task.getTitle());
-                }
-            }
-        }
-    }
+    /**
+     * @brief Display matrix structure
+     * @details Outputs a hierarchical view of categories, priorities, and tasks
+     */
+    void displayMatrix() const;
     
-    // Clear the matrix
-    void clear() {
-        matrix.clear();
-    }
+    /**
+     * @brief Clear the matrix
+     * @details Removes all tasks from all categories and priorities
+     */
+    void clear();
     
     // Check if category exists with deducing this
     template<typename Self>
@@ -135,6 +130,12 @@ public:
     }
     
     // Get total task count with deducing this
+    /**
+     * @brief Get total number of tasks across all categories and priorities
+     * @details C++23: Uses deducing this for both const and non-const access
+     * @tparam Self Deduced self type (const or non-const)
+     * @return Total number of tasks in the matrix
+     */
     template<typename Self>
     auto getTotalTaskCount(this Self&& self) -> size_t {
         size_t total = 0uz; 
@@ -146,3 +147,5 @@ public:
         return total;
     }
 };
+
+#endif // TASK_MATRIX_H
