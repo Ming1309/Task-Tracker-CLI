@@ -1,0 +1,80 @@
+name: C++23 Build and Test
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        compiler: [g++-13, clang++-15]
+        build_type: [Debug, Release]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
+        
+        # Install GCC 13 for C++23 support
+        if [[ "${{ matrix.compiler }}" == "g++-13" ]]; then
+          sudo apt-get install -y gcc-13 g++-13
+        fi
+        
+        # Install Clang 15 for C++23 support  
+        if [[ "${{ matrix.compiler }}" == "clang++-15" ]]; then
+          sudo apt-get install -y clang-15
+        fi
+    
+    - name: Configure CMake
+      run: |
+        export CXX=${{ matrix.compiler }}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_CXX_STANDARD=23
+    
+    - name: Build
+      run: cmake --build build --config ${{ matrix.build_type }}
+    
+    - name: Test basic functionality
+      run: |
+        cd build
+        echo -e "add \"Test Task\" \"GitHub Actions test\"\nlist\nstats\nsave test_ci.json\nload test_ci.json\nexit" | timeout 10 ./NewTechniquesCpp23 || true
+        
+    - name: Check build artifacts
+      run: |
+        ls -la build/
+        file build/NewTechniquesCpp23
+        
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        brew install cmake
+        
+    - name: Configure CMake (macOS with Clang)
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23
+    
+    - name: Build
+      run: cmake --build build --config Release
+    
+    - name: Test basic functionality
+      run: |
+        cd build
+        echo -e "add \"Test Task macOS\" \"GitHub Actions test on macOS\"\nlist\nstats\nexit" | timeout 10 ./NewTechniquesCpp23 || true
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: task-tracker-macos
+        path: build/NewTechniquesCpp23

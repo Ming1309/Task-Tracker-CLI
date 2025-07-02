@@ -6,11 +6,24 @@
 #include <functional>
 #include <unordered_map>
 #include <iostream>
+#include <format>
+#include <print>
 #include <compare>
 #include <expected>
 
 class App {
 private:
+    // Helper struct for table display
+    struct TaskInfo {
+        int id;
+        std::string title;
+        std::string status;
+        std::string category;
+        int priority;
+        std::string created_at;
+        std::string description;
+    };
+
     TaskManager _task_manager;
     bool _running;
     
@@ -52,12 +65,20 @@ private:
     void handleExit(const std::vector<std::string>& args);
     void handleSave(const std::vector<std::string>& args);
     void handleLoad(const std::vector<std::string>& args);
+    void handleView(const std::vector<std::string>& args);
     
     // Utility methods
     std::vector<std::string> parseInput(const std::string& input) const;
     void handleError(TaskError error) const;
     void handleJsonError(JsonError error) const;
     void printTaskDetails(const Task& task) const;
+    
+    // Table display utilities
+    void displayJsonAsTable(const std::string& json_content);
+    std::vector<TaskInfo> parseTasksFromJson(const std::string& json_content);
+    
+    // File I/O utilities using C++23 std::expected
+    std::expected<std::string, JsonError> readFileContent(const std::string& filename) const;
     
     // C++23: std::expected-based parsing utilities
     enum class ParseError {

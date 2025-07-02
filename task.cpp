@@ -52,7 +52,7 @@ TaskResult Task::setCategory(const std::string& category) {
 }
 
 std::string Task::to_string() const {
-    // C++23 std::format usage
+    // C++23 std::format usage (ready to migrate to std::print when available)
     auto created_time = std::chrono::system_clock::to_time_t(_metadata.created_at);
     auto updated_time = std::chrono::system_clock::to_time_t(_metadata.updated_at);
     
@@ -235,8 +235,8 @@ void demonstrateC23Features() {
         sorter(test_vec);
         std::cout << "5. Template Lambdas: Vector sorted\n";
         
-        // 6. std::format (simulated)
-        std::cout << std::format("6. std::format: Task ID = {}\n", task_result->getId());
+        // 6. std::format (C++23)
+        std::cout << std::format("6. std::format (C++23): Task ID = {}\n", task_result->getId());
         
         // 7. Structured bindings
         const auto& [created, updated, completed, category, priority] = task_result->getMetadata().tie();

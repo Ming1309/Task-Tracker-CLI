@@ -6,6 +6,7 @@
 #include <optional>
 #include <expected>
 #include <format>
+#include <print>
 #include <concepts>
 #include <ranges>
 #include <algorithm>
@@ -117,7 +118,7 @@ public:
     TaskResult setPriority(int priority);
     TaskResult setCategory(const std::string& category);
     
-    // C++23 Technique 7: std::format integration
+    // C++23 Technique 7: std::format integration (ready for std::print when available)
     std::string to_string() const;
     
     // C++23 Technique 8: Custom comparison operators
@@ -213,3 +214,6 @@ std::string jsonErrorToString(JsonError error);
 // JSON serialization functions
 JsonResult serializeTaskToJson(const Task& task, const std::string& filePath);
 JsonResult deserializeTaskFromJson(Task& task, const std::string& filePath);
+
+// JSON utility functions
+std::string unescapeJsonString(const std::string& str);

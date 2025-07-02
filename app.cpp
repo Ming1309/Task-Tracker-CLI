@@ -123,6 +123,14 @@ void App::initializeCommands() {
         .min_args = 0,
         .max_args = 1
     };
+    
+    _commands["view"] = Command{
+        .name = "view",
+        .description = "View/print JSON file content (view [filename])",
+        .handler = [this](const auto& args) { handleView(args); },
+        .min_args = 0,
+        .max_args = 1
+    };
 }
 
 void App::run() {
@@ -132,7 +140,10 @@ void App::run() {
     std::string input;
     while (_running) {
         std::cout << "\n🚀 TaskTracker> ";
-        std::getline(std::cin, input);
+        if (!std::getline(std::cin, input)) {
+            // EOF or input error, exit gracefully
+            break;
+        }
         
         if (input.empty()) continue;
         
@@ -151,8 +162,8 @@ void App::run() {
         
         const Command& cmd = cmd_it->second;
         if (args.size() < cmd.min_args || args.size() > cmd.max_args) {
-            std::cout << std::format("❌ Invalid number of arguments for '{}'\n", command);
-            std::cout << std::format("📋 Usage: {}\n", cmd.description);
+            std::print("❌ Invalid number of arguments for '{}'\n", command);
+            std::print("📋 Usage: {}\n", cmd.description);
             continue;
         }
         
@@ -490,6 +501,258 @@ void App::handleLoad(const std::vector<std::string>& args) {
             std::cout << "💡 Make sure the file exists and contains valid JSON.\n";
         }
     }
+}
+
+std::expected<std::string, JsonError> App::readFileContent(const std::string& filename) const {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return std::unexpected(JsonError::FileNotFound);
+    }
+    
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    
+    if (file.fail() && !file.eof()) {
+        return std::unexpected(JsonError::ParseError);
+    }
+    
+    return buffer.str();
+}
+
+void App::handleView(const std::vector<std::string>& args) {
+    std::string filename = args.empty() ? "tasks.json" : args[0];
+    
+    std::cout << std::format("👁️ Viewing JSON file: {}...\n", filename);
+    
+    // Use std::expected for file reading
+    auto content_result = readFileContent(filename);
+    if (!content_result) {
+        handleJsonError(content_result.error());
+        std::cout << "💡 Make sure the file exists and is readable.\n";
+        return;
+    }
+    
+    std::string json_content = *content_result;
+    
+    if (json_content.empty()) {
+        std::cout << "⚠️ Note: File is empty\n";
+        return;
+    }
+    
+    // Parse and display in table format
+    displayJsonAsTable(json_content);
+}
+
+void App::displayJsonAsTable(const std::string& json_content) {
+    // Simple parsing to extract basic info
+    auto findValue = [&json_content](const std::string& key) -> std::string {
+        std::string search_key = "\"" + key + "\":";
+        size_t pos = json_content.find(search_key);
+        if (pos == std::string::npos) return "";
+        
+        pos += search_key.length();
+        while (pos < json_content.length() && std::isspace(json_content[pos])) ++pos;
+        
+        if (pos >= json_content.length()) return "";
+        
+        if (json_content[pos] == '"') {
+            ++pos;
+            size_t end_pos = pos;
+            while (end_pos < json_content.length() && json_content[end_pos] != '"') {
+                if (json_content[end_pos] == '\\') ++end_pos;
+                ++end_pos;
+            }
+            return unescapeJsonString(json_content.substr(pos, end_pos - pos));
+        } else {
+            size_t end_pos = pos;
+            while (end_pos < json_content.length() && 
+                   json_content[end_pos] != ',' && 
+                   json_content[end_pos] != '}' && 
+                   json_content[end_pos] != '\n' &&
+                   json_content[end_pos] != '\r') {
+                ++end_pos;
+            }
+            std::string value = json_content.substr(pos, end_pos - pos);
+            value.erase(0, value.find_first_not_of(" \t\n\r"));
+            value.erase(value.find_last_not_of(" \t\n\r") + 1);
+            return value;
+        }
+    };
+    
+    std::string version = findValue("version");
+    std::string next_id = findValue("next_id");
+    
+    // Display file metadata
+    std::cout << "\n📊 File Information:\n";
+    std::cout << "┌─────────────┬────────────────────────────┐\n";
+    std::cout << "│ Property    │ Value                      │\n";
+    std::cout << "├─────────────┼────────────────────────────┤\n";
+    std::cout << std::format("│ Version     │ {:<26} │\n", version.empty() ? "N/A" : version);
+    std::cout << std::format("│ Next ID     │ {:<26} │\n", next_id.empty() ? "N/A" : next_id);
+    std::cout << std::format("│ File Size   │ {:<26} │\n", std::to_string(json_content.length()) + " bytes");
+    std::cout << "└─────────────┴────────────────────────────┘\n";
+    
+    // Parse tasks and display in table format
+    std::vector<TaskInfo> tasks = parseTasksFromJson(json_content);
+    
+    if (tasks.empty()) {
+        std::cout << "\n📝 No tasks found in the file.\n";
+        return;
+    }
+    
+    std::cout << std::format("\n📋 Tasks ({} total):\n", tasks.size());
+    
+    // Table header
+    std::cout << "┌────┬─────────────────────┬─────────────┬─────────────┬──────────┬────────────────────┐\n";
+    std::cout << "│ ID │ Title               │ Status      │ Category    │ Priority │ Created At         │\n";
+    std::cout << "├────┼─────────────────────┼─────────────┼─────────────┼──────────┼────────────────────┤\n";
+    
+    // Table rows
+    for (const auto& task : tasks) {
+        std::string truncated_title = task.title.length() > 19 ? 
+            task.title.substr(0, 16) + "..." : task.title;
+        std::string truncated_category = task.category.length() > 11 ? 
+            task.category.substr(0, 8) + "..." : task.category;
+        
+        std::cout << std::format("│{:>3} │ {:<19} │ {:<11} │ {:<11} │{:>9} │ {:<18} │\n",
+            task.id,
+            truncated_title,
+            task.status,
+            truncated_category,
+            task.priority,
+            task.created_at.substr(0, 18) // Show date without milliseconds
+        );
+    }
+    
+    std::cout << "└────┴─────────────────────┴─────────────┴─────────────┴──────────┴────────────────────┘\n";
+    
+    // Summary statistics
+    int pending = 0, completed = 0, in_progress = 0, cancelled = 0;
+    for (const auto& task : tasks) {
+        if (task.status == "Pending") pending++;
+        else if (task.status == "Completed") completed++;
+        else if (task.status == "InProgress") in_progress++;
+        else if (task.status == "Cancelled") cancelled++;
+    }
+    
+    std::cout << "\n📈 Summary:\n";
+    std::cout << std::format("  • Pending: {} | Completed: {} | In Progress: {} | Cancelled: {}\n", 
+        pending, completed, in_progress, cancelled);
+    
+    if (tasks.size() > 0) {
+        double completion_rate = (double)completed / tasks.size() * 100.0;
+        std::cout << std::format("  • Completion Rate: {:.1f}%\n", completion_rate);
+    }
+}
+
+std::vector<App::TaskInfo> App::parseTasksFromJson(const std::string& json_content) {
+    std::vector<TaskInfo> tasks;
+    
+    // Find tasks array
+    size_t tasks_pos = json_content.find("\"tasks\":");
+    if (tasks_pos == std::string::npos) {
+        return tasks; // No tasks array found
+    }
+    
+    // Find opening bracket of tasks array
+    size_t array_start = json_content.find('[', tasks_pos);
+    if (array_start == std::string::npos) {
+        return tasks;
+    }
+    
+    // Simple parser to extract task objects
+    size_t pos = array_start + 1;
+    while (pos < json_content.length()) {
+        // Skip whitespace
+        while (pos < json_content.length() && std::isspace(json_content[pos])) {
+            pos++;
+        }
+        
+        if (pos >= json_content.length() || json_content[pos] == ']') {
+            break; // End of array
+        }
+        
+        if (json_content[pos] == '{') {
+            // Parse task object
+            TaskInfo task;
+            task.id = 0;
+            task.priority = 0;
+            
+            size_t obj_end = pos;
+            int brace_count = 1;
+            obj_end++;
+            
+            // Find end of object
+            while (obj_end < json_content.length() && brace_count > 0) {
+                if (json_content[obj_end] == '{') brace_count++;
+                else if (json_content[obj_end] == '}') brace_count--;
+                obj_end++;
+            }
+            
+            std::string task_obj = json_content.substr(pos, obj_end - pos);
+            
+            // Extract task properties
+            auto extractValue = [&task_obj](const std::string& key) -> std::string {
+                std::string search_key = "\"" + key + "\":";
+                size_t key_pos = task_obj.find(search_key);
+                if (key_pos == std::string::npos) return "";
+                
+                key_pos += search_key.length();
+                while (key_pos < task_obj.length() && std::isspace(task_obj[key_pos])) {
+                    key_pos++;
+                }
+                
+                if (key_pos >= task_obj.length()) return "";
+                
+                if (task_obj[key_pos] == '"') {
+                    key_pos++;
+                    size_t end_pos = key_pos;
+                    while (end_pos < task_obj.length() && task_obj[end_pos] != '"') {
+                        if (task_obj[end_pos] == '\\') end_pos++;
+                        end_pos++;
+                    }
+                    return unescapeJsonString(task_obj.substr(key_pos, end_pos - key_pos));
+                } else {
+                    size_t end_pos = key_pos;
+                    while (end_pos < task_obj.length() && 
+                           task_obj[end_pos] != ',' && 
+                           task_obj[end_pos] != '}' && 
+                           task_obj[end_pos] != '\n' &&
+                           task_obj[end_pos] != '\r') {
+                        end_pos++;
+                    }
+                    std::string value = task_obj.substr(key_pos, end_pos - key_pos);
+                    value.erase(0, value.find_first_not_of(" \t\n\r"));
+                    value.erase(value.find_last_not_of(" \t\n\r") + 1);
+                    return value;
+                }
+            };
+            
+            // Parse task fields
+            std::string id_str = extractValue("id");
+            if (!id_str.empty()) {
+                task.id = std::stoi(id_str);
+            }
+            
+            task.title = extractValue("title");
+            task.status = extractValue("status");
+            task.category = extractValue("category");
+            task.created_at = extractValue("created_at");
+            task.description = extractValue("description");
+            
+            std::string priority_str = extractValue("priority");
+            if (!priority_str.empty()) {
+                task.priority = std::stoi(priority_str);
+            }
+            
+            tasks.push_back(task);
+            pos = obj_end;
+        } else {
+            pos++;
+        }
+    }
+    
+    return tasks;
 }
 
 std::vector<std::string> App::parseInput(const std::string& input) const {
