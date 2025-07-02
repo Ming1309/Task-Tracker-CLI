@@ -3,6 +3,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
+#include <print>
 
 App::App() : _running(false) {}
 
@@ -228,17 +229,17 @@ void App::displayHelp() const {
     });
     
     for (const auto& [name, cmd] : sorted_commands) {
-        std::cout << std::format("  📌 {:<15} - {}\n", cmd.name, cmd.description);
+        std::print("  📌 {:<15} - {}\n", cmd.name, cmd.description);
     }
     
-    std::cout << "\n💡 Examples:\n";
-    std::cout << "  add \"Buy groceries\" \"Get milk, bread, and eggs\"\n";
-    std::cout << "  list pending\n";
-    std::cout << "  complete 1\n";
-    std::cout << "  priority 2 5\n";
-    std::cout << "  category 1 Shopping\n";
-    std::cout << "  save tasks.json\n";
-    std::cout << "  load tasks.json\n";
+    std::print("\n💡 Examples:\n");
+    std::print("  add \"Buy groceries\" \"Get milk, bread, and eggs\"\n");
+    std::print("  list pending\n");
+    std::print("  complete 1\n");
+    std::print("  priority 2 5\n");
+    std::print("  category 1 Shopping\n");
+    std::print("  save tasks.json\n");
+    std::print("  load tasks.json\n");
 }
 
 void App::handleAdd(const std::vector<std::string>& args) {
@@ -247,7 +248,7 @@ void App::handleAdd(const std::vector<std::string>& args) {
     
     auto result = _task_manager.addTask(title, description);
     if (result) {
-        std::cout << std::format("✅ Task '{}' added successfully with ID = {}\n", title, *result);
+        std::print("✅ Task '{}' added successfully with ID = {}\n", title, *result);
     } else {
         handleError(result.error());
     }
@@ -261,8 +262,8 @@ void App::handleList(const std::vector<std::string>& args) {
         if (status) {
             _task_manager.listTasksByStatus(*status);
         } else {
-            std::cout << std::format("❌ Invalid status: {}\n", args[0]);
-            std::cout << "📋 Valid statuses: pending, progress, completed, cancelled\n";
+            std::print("❌ Invalid status: {}\n", args[0]);
+            std::print("📋 Valid statuses: pending, progress, completed, cancelled\n");
         }
     }
 }
@@ -270,14 +271,14 @@ void App::handleList(const std::vector<std::string>& args) {
 void App::handleComplete(const std::vector<std::string>& args) {
     auto id_result = parseInteger(args[0]);
     if (!id_result) {
-        std::cout << std::format("❌ {}\n", parseErrorToString(id_result.error()));
+        std::print("❌ {}\n", parseErrorToString(id_result.error()));
         return;
     }
     
     int id = *id_result;
     auto result = _task_manager.updateTaskStatus(id, TaskStatus::Completed);
     if (result) {
-        std::cout << std::format("✅ Task {} marked as completed!\n", id);
+        std::print("✅ Task {} marked as completed!\n", id);
     } else {
         handleError(result.error());
     }
@@ -286,7 +287,7 @@ void App::handleComplete(const std::vector<std::string>& args) {
 void App::handleRemove(const std::vector<std::string>& args) {
     auto id_result = parseInteger(args[0]);
     if (!id_result) {
-        std::cout << std::format("❌ {}\n", parseErrorToString(id_result.error()));
+        std::print("❌ {}\n", parseErrorToString(id_result.error()));
         return;
     }
     
@@ -395,17 +396,17 @@ void App::handleStats(const std::vector<std::string>& args) {
     size_t total = _task_manager.getTaskCount();
     size_t completed = _task_manager.getCompletedTasksCount();
     size_t pending = _task_manager.getPendingTasksCount();
+    size_t in_progress = total - completed - pending - std::ranges::count_if(_task_manager.getAllTasks(), 
+                [](const Task& t) { return t.getStatus() == TaskStatus::Cancelled; });
     double completion_rate = _task_manager.getCompletionRate();
     
     std::cout << "\n📊 Task Statistics\n";
     std::cout << "══════════════════\n";
-    std::cout << std::format("📋 Total Tasks:     {}\n", total);
-    std::cout << std::format("✅ Completed:       {}\n", completed);
-    std::cout << std::format("⏳ Pending:         {}\n", pending);
-    std::cout << std::format("🚧 In Progress:     {}\n", 
-                total - completed - pending - std::ranges::count_if(_task_manager.getAllTasks(), 
-                [](const Task& t) { return t.getStatus() == TaskStatus::Cancelled; }));
-    std::cout << std::format("📈 Completion Rate: {:.1f}%\n", completion_rate);
+    std::print("📋 Total Tasks:     {}\n", total);
+    std::print("✅ Completed:       {}\n", completed);
+    std::print("⏳ Pending:         {}\n", pending);
+    std::print("🚧 In Progress:     {}\n", in_progress);
+    std::print("📈 Completion Rate: {:.1f}%\n", completion_rate);
 }
 
 void App::handleFind(const std::vector<std::string>& args) {
@@ -519,12 +520,9 @@ void App::handleLoad(const std::vector<std::string>& args) {
         std::cout << std::format("✅ Tasks loaded successfully from {}\n", filename);
         std::cout << std::format("📊 Total tasks loaded: {}\n", _task_manager.getTaskCount());
         
-        // Show a summary of loaded tasks
+        // Suggest using stats command for more details
         if (_task_manager.getTaskCount() > 0) {
-            std::cout << "\n📋 Task Summary:\n";
-            std::cout << std::format("  • Pending: {}\n", _task_manager.getPendingTasksCount());
-            std::cout << std::format("  • Completed: {}\n", _task_manager.getCompletedTasksCount());
-            std::cout << std::format("  • Completion Rate: {:.1f}%\n", _task_manager.getCompletionRate());
+            std::cout << "� Use 'stats' command to view detailed task statistics\n";
         }
     } else {
         handleJsonError(result.error());
@@ -659,23 +657,8 @@ void App::displayJsonAsTable(const std::string& json_content) {
     
     std::cout << "└────┴─────────────────────┴─────────────┴─────────────┴──────────┴─────────────────────┘\n";
     
-    // Summary statistics
-    int pending = 0, completed = 0, in_progress = 0, cancelled = 0;
-    for (const auto& task : tasks) {
-        if (task.status == "Pending") pending++;
-        else if (task.status == "Completed") completed++;
-        else if (task.status == "InProgress") in_progress++;
-        else if (task.status == "Cancelled") cancelled++;
-    }
-    
-    std::cout << "\n📈 Summary:\n";
-    std::cout << std::format("  • Pending: {} | Completed: {} | In Progress: {} | Cancelled: {}\n", 
-        pending, completed, in_progress, cancelled);
-    
-    if (tasks.size() > 0) {
-        double completion_rate = (double)completed / tasks.size() * 100.0;
-        std::cout << std::format("  • Completion Rate: {:.1f}%\n", completion_rate);
-    }
+    // Suggest using stats command for more details
+    std::cout << "\n� Use 'stats' command to view detailed task statistics\n";
 }
 
 std::vector<App::TaskInfo> App::parseTasksFromJson(const std::string& json_content) {

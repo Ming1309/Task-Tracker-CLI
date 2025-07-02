@@ -327,10 +327,6 @@ public:
  */
 class TaskManager;
 
-/**
- * @brief Demonstrates C++23 features used in the application
- */
-void demonstrateC23Features();
 
 /**
  * @brief Convert a TaskStatus enum to its string representation

@@ -62,183 +62,178 @@ make
 | `stats` | Hiển thị thống kê | `stats` |
 | `save` | Lưu vào file JSON | `save tasks.json` |
 | `load` | Tải từ file JSON | `load tasks.json` |
-| `view` | Xem thông tin file JSON, tasks và Summary | `view tasks.json` |
+| `view` | Xem thông tin file JSON | `view tasks.json` |
 | `matrix` | Hiển thị dạng ma trận | `matrix` |
 | `help` | Hiển thị trợ giúp | `help` |
 | `exit` | Thoát ứng dụng | `exit` |
 
-### Ví Dụ Sử Dụng Thực Tế
 
-```bash
-🚀 TaskTracker> add "Học C++23" "Tìm hiểu về 10 kĩ thuật mới trong C++23"
-✅ Task 'Học C++23' added successfully with ID = 1
-
-🚀 TaskTracker> priority 1 9
-🎯 Task 1 priority set to 9
-
-🚀 TaskTracker> category 1 "Programming"
-🏷️ Task 1 category set to 'Programming'
-
-🚀 TaskTracker> list
-=== Task List (1 tasks) ===
-[1] Học C++23 - Pending (Priority: 9, Category: Programming)
-Completion Rate: 0.0%
-
-🚀 TaskTracker> save tasks.json 
-💾 Saving tasks to tasks.json...
-✅ Tasks saved successfully to tasks.json
-📊 Total tasks saved: 1
-```
-
-## 🎯 15+ Kỹ Thuật C++23 Được Sử Dụng
+## 🎯 10 Kỹ Thuật C++23 Được Sử Dụng
 
 ### 1. **Deducing This (Explicit Object Parameter)**
 ```cpp
-// C++23: Deducing this - eliminates const/non-const duplication
-template<typename Self>
-auto getId(this Self&& self) -> decltype(auto) {
-    return (std::forward<Self>(self)._id);
-}
+// Trước C++23: Cần duplicate code cho const và non-const versions
+// class Task {
+//   public:
+//     const std::string& getTitle() const { return _title; }
+//     std::string& getTitle() { return _title; }
+// };
 
-template<typename Self>
-auto getTitle(this Self&& self) -> decltype(auto) {
-    return (std::forward<Self>(self)._title);
-}
+// C++23: Một method duy nhất cho cả const và non-const
+class Task {
+  public:
+    template<typename Self>
+    auto getTitle(this Self&& self) -> decltype(auto) {
+        return std::forward<Self>(self)._title;
+    }
+};
 ```
-**Mô tả**: Thay thế hoàn toàn const/non-const overloads bằng một template method duy nhất.\
-**Ứng dụng**: Zero-cost abstraction cho accessors, tránh code duplication, perfect forwarding tự động.
+**Mô tả**: Cho phép sử dụng từ khóa `this` làm tham số đầu tiên của method, hỗ trợ perfect forwarding cho phương thức và loại bỏ code duplication.\
+**Ứng dụng**: Trong Task Tracker, được dùng cho tất cả accessors (getId, getTitle, getDescription) và TaskMatrix methods để giảm code duplication.
 
-### 2. **std::flat_map cho Better Cache Locality**
+### 2. **std::print**
 ```cpp
-// C++23: Using flat_map for better cache locality and iteration performance
-std::flat_map<std::string, std::flat_map<int, std::vector<Task>>> matrix;
+// Trước C++23: Output dùng iostream
+// std::cout << "Task '" << title << "' added successfully!" << std::endl;
+// std::cout << "Found " << tasks.size() << " task(s)" << std::endl;
 
-// Thay vì std::unordered_map với pointer indirection
-// flat_map cung cấp contiguous memory layout
+// C++23: std::print - API đơn giản và mạnh mẽ hơn
+std::print("✅ Task '{}' added successfully!\n", title);
+std::print("📊 Found {} task(s)\n", tasks.size());
 ```
-**Mô tả**: Container với cache-friendly layout, faster iteration so với standard maps.\
-**Ứng dụng**: TaskMatrix storage cho better performance khi access task data theo category/priority.
+**Mô tả**: API formatting mới thay thế cho `std::cout` và `std::format`, cung cấp cú pháp đơn giản, hiệu suất cao và type-safe.\
+**Ứng dụng**: Sử dụng trong toàn bộ ứng dụng Task Tracker cho output (hiển thị danh sách, thông báo, thống kê).
 
 ### 3. **std::expected**
 ```cpp
-using TaskResult = std::expected<bool, TaskError>;
-using TaskOptional = std::expected<Task, TaskError>;
-using JsonResult = std::expected<bool, JsonError>;
+// C++23: Functional error handling thay vì exceptions
+struct TaskError {
+    enum Code { InvalidId, EmptyTitle, DuplicateId } code;
+    std::string message;
+};
 
-TaskResult addTask(const std::string& title, const std::string& description = "");
-std::expected<std::string, JsonError> readFileContent(const std::string& filename) const;
+// Return type biểu thị rõ ràng khả năng lỗi
+using TaskResult = std::expected<bool, TaskError>;
+
+TaskResult TaskManager::addTask(const std::string& title, const std::string& desc) {
+    if (title.empty()) {
+        return std::unexpected(TaskError{
+            .code = TaskError::EmptyTitle,
+            .message = "Task title cannot be empty"
+        });
+    }
+    // Add task implementation...
+    return true;
+}
+
+// Sử dụng kết quả
+auto result = taskManager.addTask("New Task", "Description");
+if (result) {
+    std::print("Task added successfully\n");
+} else {
+    std::print("Error: {}\n", result.error().message);
+}
 ```
-**Mô tả**: Thay thế exceptions bằng functional error handling, hiệu suất cao hơn.\
-**Ứng dụng**: Xử lý lỗi file I/O, validation, và business logic một cách explicit và safe.
+**Mô tả**: Cung cấp cách xử lý lỗi functional, rõ ràng hơn so với exception, hiệu suất cao hơn, và giúp API biểu thị rõ khả năng lỗi trong kiểu trả về.\
+**Ứng dụng**: Sử dụng trong toàn bộ Task Tracker cho mọi operation có thể gặp lỗi (thêm, xóa, cập nhật task, I/O operations).
 
 ### 4. **Multidimensional Subscript Operator**
 ```cpp
-// C++23: Multidimensional subscript operator with deducing this
-template<typename Self>
-decltype(auto) operator[](this Self&& self, const std::string& category, int priority) {
-    if constexpr (std::is_const_v<std::remove_reference_t<Self>>) {
-        // Const version - return empty if not found
-        static const std::vector<Task> empty;
-        auto cat_it = self.matrix.find(category);
-        if (cat_it == self.matrix.end()) return empty;
-        return cat_it->second.find(priority)->second;
-    } else {
-        // Non-const version - create if not exists
-        return (std::forward<Self>(self).matrix[category][priority]);
+// C++23: Operator[] có thể nhận nhiều tham số
+class TaskMatrix {
+    std::map<std::string, std::map<int, std::vector<Task>>> matrix;
+
+public:
+    // Truy cập theo category và priority trong một lần gọi
+    template<typename Self>
+    decltype(auto) operator[](this Self&& self, 
+                             const std::string& category, 
+                             int priority) {
+        if constexpr (std::is_const_v<std::remove_reference_t<Self>>) {
+            // Const version: chỉ đọc, không tạo mới
+            static const std::vector<Task> empty;
+            auto it = self.matrix.find(category);
+            if (it == self.matrix.end()) return empty;
+            auto pit = it->second.find(priority);
+            if (pit == it->second.end()) return empty;
+            return pit->second;
+        } else {
+            // Non-const version: tạo mới nếu không tồn tại
+            return self.matrix[category][priority];
+        }
     }
-}
-```
-**Mô tả**: Cho phép truy cập dữ liệu theo nhiều chiều với syntax tự nhiên.\
-**Ứng dụng**: Tổ chức tasks theo category và priority: `task_matrix["Work", 5]`.
-
-### 5. **Concepts cho Type Constraints**
-```cpp
-template<typename T>
-concept Stringable = requires(T t) {
-    { t.to_string() } -> std::convertible_to<std::string>;
 };
 
-template<typename T>
-concept TaskLike = requires(T t) {
-    { t.getId() } -> std::convertible_to<int>;
-    { t.getTitle() } -> std::convertible_to<std::string>;
-    { t.getStatus() } -> std::convertible_to<TaskStatus>;
+// Sử dụng
+taskMatrix["Work", 5].push_back(task);  // Thêm task vào "Work" với priority 5
+auto highPriorityTasks = taskMatrix["Personal", 10];  // Lấy tasks với priority 10
+```
+**Mô tả**: Cho phép operator[] nhận nhiều tham số, tạo ra cú pháp tự nhiên cho truy cập đa chiều.\
+**Ứng dụng**: Trong TaskMatrix để tổ chức và truy cập tasks theo category và priority một cách trực quan.
+
+### 5. **auto(x) Lambda Capture**
+```cpp
+// Trước C++23: Cần tạo bản copy thủ công 
+// auto keyword_copy = keyword;
+// auto filterTasks = [keyword = keyword_copy](const Task& task) { ... };
+
+// C++23: auto(x) tạo decay-copy tự động
+auto filterTasks = [keyword = auto(keyword)](const Task& task) {
+    const std::string& title = task.getTitle();
+    const std::string& desc = task.getDescription();
+    
+    return title.contains(keyword) || desc.contains(keyword);
 };
-
-template<std::predicate<const Task&> Predicate>
-auto filterTasks(Predicate&& pred) const {
-    return _tasks | std::views::filter(std::forward<Predicate>(pred));
-}
 ```
-**Mô tả**: Type constraints mạnh mẽ, error messages rõ ràng, template constraints.\
-**Ứng dụng**: Validation cho template parameters, type-safe generic programming.
+**Mô tả**: Cú pháp `auto(x)` tạo decay-copy tự động trong lambda captures, giải quyết dangling reference problem, an toàn hơn và ít code hơn.\
+**Ứng dụng**: Trong Task Tracker dùng cho filtering operations, search functionality và handlers khi cần capture biến từ scope bên ngoài.
 
-### 6. **std::format & std::print Integration**
+### 6. **size_t Literal Suffix (uz)**
 ```cpp
-// Modern formatting trong output
-std::print("✅ Task '{}' added successfully!\n", title);
-std::print("📊 Found {} task(s)\n", tasks.size());
+// Trước C++23: Phải cast hoặc dùng static_cast
+// constexpr std::size_t MAX_TASKS = 100;
+// for (std::size_t i = 0; i < tasks.size(); ++i) { ... }
 
-// Enhanced formatting với std::format
-std::cout << std::format("🎯 Task {} priority set to {}\n", id, priority);
-std::cout << std::format("📈 Completion Rate: {:.1f}%\n", completion_rate);
-
-// JSON serialization với std::format
-json << std::format("  \"id\": {},\n", _id);
-json << std::format("  \"title\": \"{}\",\n", escapeJsonString(_title));
-```
-**Mô tả**: Modern string formatting thay thế printf/iostreams, type-safe và readable.\
-**Ứng dụng**: Console output, JSON serialization, user feedback messages.
-
-### 7. **uz Suffix cho size_t Literals**
-```cpp
-// C++23: uz suffix cho size_t constants
-constexpr auto MAX_COMMAND_ARGS = 5uz;
-constexpr auto MIN_COMMAND_LENGTH = 1uz;
+// C++23: Size-specific literal suffix
+constexpr auto MAX_COMMAND_ARGS = 5uz;  // uz suffix cho std::size_t
 constexpr auto MAX_INPUT_LENGTH = 1000uz;
 static constexpr auto MAX_RECENT_COMMANDS = 10uz;
 
-// Sử dụng trong loops và comparisons
+// Sử dụng trong loops
 for (std::size_t i = 0uz; i < tasks.size(); ++i) {
     // Process tasks
 }
+
+// So sánh với size()
+if (command.size() > MAX_COMMAND_LENGTH) { ... }
 ```
-**Mô tả**: Literal suffix cho size_t để tránh warnings và explicit typing.\
-**Ứng dụng**: Định nghĩa constants và loop indices một cách type-safe.
+**Mô tả**: Suffix `uz` cho phép tạo literals kiểu `std::size_t` mà không cần cast, giúp tránh warnings và type-safety.\
+**Ứng dụng**: Trong Task Tracker dùng để định nghĩa constants, indices và so sánh với container sizes.
 
-### 8. **contains() Method for Associative Containers**
+### 7. **std::string::contains**
 ```cpp
-// Enhanced command validation với .contains()
-bool validateCommand(const std::string& cmd) const {
-    return !cmd.empty() && 
-           cmd.length() >= MIN_COMMAND_LENGTH &&
-           _commands.contains(cmd);  // C++23: .contains() method
+// Trước C++23: Kiểm tra substring với find() != npos
+// if (title.find(keyword) != std::string::npos) { ... }
+
+// C++23: Sử dụng contains() rõ ràng và ngắn gọn hơn
+bool Task::containsKeyword(const std::string& keyword) const {
+    return _title.contains(keyword) || _description.contains(keyword);
 }
 
-// TaskMatrix category existence check
-template<typename Self>
-auto hasCategory(this Self&& self, const std::string& category) -> bool {
-    return self.matrix.contains(category);  
+// Kiểm tra command hợp lệ
+bool AppController::isValidCommand(const std::string& cmd) const {
+    return !cmd.empty() && _commands.contains(cmd);
 }
 ```
-**Mô tả**: Method .contains() đơn giản hơn so với find() != end().\
-**Ứng dụng**: Validation và existence checking cho commands và tasks.
+**Mô tả**: Method `contains()` cho phép kiểm tra sự tồn tại của substring hoặc key trong containers một cách ngắn gọn và trực quan hơn.\
+**Ứng dụng**: Trong Task Tracker dùng cho validation, search functionality và map lookups.
 
-### 9. **consteval Functions & if consteval**
+### 8. **if consteval**
 ```cpp
-// C++23 Feature: consteval functions for compile-time validation
-consteval bool isValidPriority(int priority) {
-    return priority >= 0 && priority <= 10;
-}
-
-consteval size_t maxTaskTitleLength() {
-    return 100uz;  // C++23: uz suffix for size_t
-}
-
-// C++23 Feature: if consteval for optimized string processing
+// C++23: if consteval cho compile-time vs runtime behavior
 constexpr std::string_view getTaskStatusString(TaskStatus status) {
     if consteval {
-        // Compile-time: Simple lookup
+        // Compile-time: Basic strings
         switch (status) {
             case TaskStatus::Pending: return "Pending";
             case TaskStatus::InProgress: return "InProgress";
@@ -247,7 +242,7 @@ constexpr std::string_view getTaskStatusString(TaskStatus status) {
         }
         return "Unknown";
     } else {
-        // Runtime: More flexible processing
+        // Runtime: Rich formatted strings
         switch (status) {
             case TaskStatus::Pending: return "⏳ Pending";
             case TaskStatus::InProgress: return "🚧 In Progress";
@@ -258,267 +253,282 @@ constexpr std::string_view getTaskStatusString(TaskStatus status) {
     }
 }
 ```
-**Mô tả**: Compile-time evaluation và dual compile-time/runtime behavior.\
-**Ứng dụng**: Compile-time validation, performance optimization, constexpr algorithms.
+**Mô tả**: `if consteval` cho phép có hành vi khác nhau tại compile-time và runtime trong constexpr functions.\
+**Ứng dụng**: Trong Task Tracker dùng cho biến đổi enum sang string, validation và formatting khác nhau giữa serialization và display.
 
-### 10. **Enhanced Lambda Expressions**
+### 9. **consteval Functions**
 ```cpp
-// C++23: auto(x) decay copy for safer lambda captures
-auto filterTasks = [keyword = auto(keyword)](const Task& task) {
-    const std::string& title = task.getTitle();
-    const std::string& desc = task.getDescription();
-    
-    // Case-insensitive search với ranges
-    auto to_lower = [](std::string str) {
-        std::ranges::transform(str, str.begin(), ::tolower);
-        return str;
-    };
-    
-    std::string lower_keyword = to_lower(keyword);
-    std::string lower_title = to_lower(title);
-    std::string lower_desc = to_lower(desc);
-    
-    return lower_title.contains(lower_keyword) || lower_desc.contains(lower_keyword);
-};
-
-// Command handlers với perfect forwarding
-_commands["find"] = Command{
-    .name = "find",
-    .description = "Find tasks by title keyword",
-    .handler = [this](const auto& args) { handleFind(args); },
-    .min_args = 1,
-    .max_args = 1
-};
-```
-**Mô tả**: auto(x) decay copy, safer captures, enhanced lambda features.\
-**Ứng dụng**: Command handling, filtering operations, safe lambda captures.
-
-### 11. **std::ranges Integration**
-```cpp
-// Enhanced filtering với ranges views
-template<std::predicate<const Task&> Predicate>
-auto filterTasks(Predicate&& pred) const {
-    return _tasks | std::views::filter(std::forward<Predicate>(pred));
+// C++23: consteval yêu cầu compile-time evaluation
+consteval bool isValidPriority(int priority) {
+    return priority >= 0 && priority <= 10;
 }
 
-// Sorting với std::ranges::sort
-std::ranges::sort(sorted_commands, [](const auto& a, const auto& b) {
-    return a.first < b.first;
-});
+consteval std::size_t maxTaskTitleLength() {
+    return 100uz;  // C++23: uz suffix
+}
 
-// Finding với std::ranges::find_if
-auto it = std::ranges::find_if(tasks, [id](Task& task) {
-    return task.getId() == id;
-});
+// Sử dụng
+static_assert(isValidPriority(5));  // OK
+static_assert(!isValidPriority(11)); // Compile error
+static_assert(maxTaskTitleLength() == 100uz); // OK
 
-// Statistics với std::ranges::count_if
-return std::ranges::count_if(_tasks, [](const Task& task) {
-    return task.getStatus() == TaskStatus::Completed;
-});
+// Runtime check với constexpr variable
+constexpr auto MAX_PRIORITY = 10;
+if (priority > MAX_PRIORITY) { 
+    return std::unexpected(TaskError{.code = TaskError::InvalidPriority});
+}
 ```
-**Mô tả**: Modern algorithms với ranges, lazy evaluation, composable operations.\
-**Ứng dụng**: Data filtering, sorting, searching, statistics calculation.
+**Mô tả**: Functions được đánh dấu `consteval` bắt buộc phải được tính toán tại compile-time, không thể dùng ở runtime, giúp enforce compile-time checks và tối ưu code.\
+**Ứng dụng**: Trong Task Tracker dùng cho validation logic, defining constants và compile-time checks.
 
-### 12. **Designated Initializers**
+### 10. **Designated Initializers với Nested Structs**
 ```cpp
-// C++23: Enhanced designated initializers
+// C++23: Designated initializers với nested structs
+struct Command {
+    std::string name;
+    std::string description;
+    std::function<void(const std::vector<std::string>&)> handler;
+    size_t min_args;
+    size_t max_args;
+    struct Help {
+        std::string usage;
+        std::string example;
+        bool is_advanced;
+    } help;
+};
+
+// Initialization đầy đủ và rõ ràng
 _commands["add"] = Command{
     .name = "add",
-    .description = "Add a new task (add \"title\" [description])",
+    .description = "Add a new task",
     .handler = [this](const auto& args) { handleAdd(args); },
     .min_args = 1,
-    .max_args = 2
-};
-
-_commands["matrix"] = Command{
-    .name = "matrix",
-    .description = "Show task matrix by category and priority (matrix)",
-    .handler = [this](const auto& args) { handleMatrix(args); },
-    .min_args = 0,
-    .max_args = 0
-};
-```
-**Mô tả**: Clean struct initialization với named fields.\
-**Ứng dụng**: Command structure initialization, configuration objects.
-
-### 13. **Enhanced enum class với Underlying Types**
-```cpp
-// C++23: Explicit underlying types cho better memory usage
-enum class TaskStatus : std::uint8_t {
-    Pending,
-    InProgress, 
-    Completed,
-    Cancelled
-};
-
-enum class TaskError {
-    InvalidId,
-    TaskNotFound,
-    InvalidStatus,
-    EmptyTitle,
-    DuplicateTask
-};
-
-enum class JsonError {
-    FileNotFound,
-    InvalidFormat,
-    WriteError,
-    ParseError
-};
-```
-**Mô tả**: Strong typing với explicit underlying types cho memory efficiency.\
-**Ứng dụng**: Status tracking, error categorization, type-safe enumerations.
-
-### 14. **Template Parameter Deduction & Perfect Forwarding**
-```cpp
-// Enhanced template deduction trong TaskManager
-template<typename Compare>
-requires std::strict_weak_order<Compare, Task, Task>
-std::vector<Task> getSortedTasks(Compare&& comp) const {
-    auto sorted_tasks = _tasks;
-    std::ranges::sort(sorted_tasks, std::forward<Compare>(comp));
-    return sorted_tasks;
-}
-
-// Deducing this với perfect forwarding
-template<typename Self>
-auto getAllTasks(this Self&& self) -> decltype(auto) { 
-    return (std::forward<Self>(self)._tasks);
-}
-```
-**Mô tả**: Advanced template techniques với perfect forwarding và deduction.\
-**Ứng dụng**: Generic algorithms, zero-cost abstractions, type-safe forwarding.
-
-### 15. **Modern Error Handling Patterns**
-```cpp
-// C++23: std::expected pattern throughout the application
-auto result = _task_manager.addTask(title, description);
-if (result) {
-    std::cout << std::format("✅ Task '{}' added successfully!\n", title);
-} else {
-    handleError(result.error());
-}
-
-// Chaining expected operations
-auto readFileContent(const std::string& filename) const -> std::expected<std::string, JsonError> {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        return std::unexpected(JsonError::FileNotFound);
+    .max_args = 2,
+    .help = {
+        .usage = "add \"title\" [\"description\"]",
+        .example = "add \"Buy groceries\" \"Milk, eggs, bread\"",
+        .is_advanced = false
     }
-    
-    std::ostringstream buffer;
-    buffer << file.rdbuf();
-    
-    if (file.fail() && !file.eof()) {
-        return std::unexpected(JsonError::ParseError);
-    }
-    
-    return buffer.str();
-}
+};
 ```
-**Mô tả**: Comprehensive error handling với std::expected, pattern matching.\
-**Ứng dụng**: File I/O operations, business logic validation, user feedback.
-
-### 16. **Advanced Compile-time Programming**
-```cpp
-// C++23: if consteval for performance optimization
-constexpr bool validateTaskData(std::string_view title, std::string_view description, int priority) {
-    if consteval {
-        // Compile-time validation (basic checks)
-        return !title.empty() && 
-               title.length() <= maxTaskTitleLength() &&
-               description.length() <= maxTaskDescriptionLength() &&
-               priority >= 0 && priority <= 10;
-    } else {
-        // Runtime validation (more comprehensive)
-        if (title.empty()) return false;
-        if (title.length() > maxTaskTitleLength()) return false;
-        if (description.length() > maxTaskDescriptionLength()) return false;
-        if (priority < 0 || priority > 10) return false;
-        
-        // Runtime-only checks
-        if (title.front() == ' ' || title.back() == ' ') return false;
-        
-        return true;
-    }
-}
-```
-**Mô tả**: Dual compile-time/runtime behavior cho maximum optimization.\
-**Ứng dụng**: Data validation, performance-critical paths, compile-time constants.
-
-## 📊 Code Coverage Summary
-
-### C++23 Features Implementation Status
-- ✅ **Deducing This**: 100% implemented across all classes
-- ✅ **std::flat_map**: Full implementation in TaskMatrix
-- ✅ **std::expected**: Comprehensive error handling
-- ✅ **Multidimensional Subscript**: TaskMatrix access operator
-- ✅ **Concepts**: Type constraints và validation
-- ✅ **std::format/std::print**: Modern formatting throughout
-- ✅ **uz Suffix**: Size_t literals usage
-- ✅ **contains()**: Associative container methods
-- ✅ **consteval/if consteval**: Compile-time optimization
-- ✅ **Enhanced Lambdas**: auto(x) và safer captures
-- ✅ **std::ranges**: Functional programming integration
-- ✅ **Designated Initializers**: Struct initialization
-- ✅ **Enhanced enums**: Underlying types specification
-- ✅ **Template Deduction**: Perfect forwarding patterns
-- ✅ **Modern Error Handling**: std::expected patterns
-- ✅ **Compile-time Programming**: Advanced constexpr usage
-
-### Performance Metrics
-```
-Total Lines of Code: ~2000+
-C++23 Features Coverage: ~90%
-Memory Optimization: std::flat_map + deducing this
-Compile-time Computation: consteval functions
-Error Handling: 100% std::expected (no exceptions)
-Type Safety: Concepts + strong typing
-```
-
-## 🚀 Future Roadmap
-
-### Planned C++23 Enhancements
-- [ ] **std::mdspan**: Multi-dimensional task analytics
-- [ ] **std::generator**: Coroutine-based task streaming  
-- [ ] **Modules**: Replace headers với import system
-- [ ] **std::stacktrace**: Enhanced debugging capability
-- [ ] **More consteval**: Expand compile-time computations
-- [ ] **Advanced ranges**: Pipeline operations
-
-### Next-Generation Features
-- [ ] **Task Dependencies**: Graph-based task relationships
-- [ ] **Real-time Analytics**: Live dashboard với mdspan
-- [ ] **Plugin Architecture**: Extensible command system
-- [ ] **Concurrent Processing**: std::jthread integration
-- [ ] **Database Backend**: Persistent storage layer
-- [ ] **Web Interface**: REST API với same C++23 backend
-
-## 🎯 Project Achievements
-
-### Technical Excellence
-- **Zero Legacy Code**: 100% modern C++23 implementation
-- **Type Safety**: No runtime type errors với concepts
-- **Memory Efficiency**: Cache-friendly data structures
-- **Performance**: Zero-cost abstractions throughout
-- **Maintainability**: Self-documenting code với concepts
-
-### Educational Value
-- **Comprehensive Examples**: Real-world usage của 16+ C++23 features
-- **Best Practices**: Modern C++ patterns và idioms
-- **Architecture Design**: SOLID principles với C++23
-- **Performance Optimization**: Memory layout và compile-time computation
-- **Error Handling**: Functional approach với std::expected
-
-### Innovation Highlights
-- **Deducing This**: Eliminates const/non-const duplication
-- **std::flat_map**: Better cache locality cho real data
-- **Multidimensional Access**: Natural syntax cho complex data
-- **Compile-time Validation**: Performance + safety
-- **Functional Error Handling**: Predictable và efficient
+**Mô tả**: C++23 mở rộng designated initializers cho nested structs, cho phép initialization rõ ràng và có cấu trúc tốt hơn.\
+**Ứng dụng**: Trong Task Tracker dùng cho command definitions, configuration và complex data structures.
 
 ---
+## Demo 
 
+```bash
+╔══════════════════════════════════════════╗
+║           🎯 Task Tracker CLI            ║
+╚══════════════════════════════════════════╝
+
+Welcome to your personal task management system!
+Type 'help' to see available commands.
+
+🚀 TaskTracker> help
+
+📋 Available Commands:
+═══════════════════════
+  📌 add             - Add a new task (add "title" [description])
+  📌 category        - Set task category (category <task_id> <category_name>)
+  📌 complete        - Mark task as completed (complete <task_id>)
+  📌 exit            - Exit the application
+  📌 find            - Find tasks by title keyword (find <keyword>)
+  📌 get             - Get tasks by category and priority (get <category> <priority>)
+  📌 help            - Show this help message
+  📌 list            - List all tasks or by status (list [status])
+  📌 load            - Load tasks from JSON file (load [filename])
+  📌 matrix          - Show task matrix by category and priority (matrix)
+  📌 priority        - Set task priority (priority <task_id> <priority_number>)
+  📌 recent          - Show recent commands (recent)
+  📌 remove          - Remove a task (remove <task_id>)
+  📌 save            - Save tasks to JSON file (save [filename])
+  📌 sort            - Sort tasks by criteria (sort <priority|created|title>)
+  📌 stats           - Show task statistics
+  📌 status          - Update task status (status <task_id> <new_status>)
+  📌 view            - View/print JSON file content (view [filename])
+
+💡 Examples:
+  add "Buy groceries" "Get milk, bread, and eggs"
+  list pending
+  complete 1
+  priority 2 5
+  category 1 Shopping
+  save tasks.json
+  load tasks.json
+
+🚀 TaskTracker> add "Viết báo cáo nhóm"
+✅ Task 'Viết báo cáo nhóm' added successfully with ID = 1
+
+🚀 TaskTracker> add "Chuẩn bị bài thuyết trình" "PowerPoint cho thứ 5"
+✅ Task 'Chuẩn bị bài thuyết trình' added successfully with ID = 2
+
+🚀 TaskTracker> priority 1 7
+🎯 Task 1 priority set to 7
+
+🚀 TaskTracker> priority 2 9
+🎯 Task 2 priority set to 9
+
+🚀 TaskTracker> category 1 "School"
+🏷️ Task 1 category set to 'School'
+
+🚀 TaskTracker> 
+
+🚀 TaskTracker> category 2 "Work"
+🏷️ Task 2 category set to 'Work'
+
+🚀 TaskTracker> complete 1
+✅ Task 1 marked as completed!
+🚀 TaskTracker> find "báo cáo"
+🔍 Found 1 task(s) containing 'báo cáo'
+  [1] Viết báo cáo nhóm - Completed
+
+🚀 TaskTracker> find PowerPoint
+🔍 Found 1 task(s) containing 'PowerPoint'
+  [2] Chuẩn bị bài thuyết trình - Pending
+
+🚀 TaskTracker> list
+=== Task List (2 tasks) ===
+[1] Viết báo cáo nhóm - Completed (Priority: 7, Category: School)
+[2] Chuẩn bị bài thuyết trình - Pending (Priority: 9, Category: Work)
+Completion Rate: 50.0%
+
+🚀 TaskTracker> list Completed
+=== Completed Tasks (1 tasks) ===
+[1] Viết báo cáo nhóm (Priority: Completed, Category: 7)
+
+🚀 TaskTracker> list Pending
+=== Pending Tasks (1 tasks) ===
+[2] Chuẩn bị bài thuyết trình (Priority: Pending, Category: 9)
+
+🚀 TaskTracker> get Work 9
+🎯 Tasks in category 'Work' with priority 9:
+===============================================
+  [2] Chuẩn bị bài thuyết trình - ⏳ Pending
+
+📊 Found 1 task(s)
+
+🚀 TaskTracker> get School 7
+🎯 Tasks in category 'School' with priority 7:
+===============================================
+  [1] Viết báo cáo nhóm - ✅ Completed
+
+📊 Found 1 task(s)
+
+🚀 TaskTracker> matrix
+
+📊 Task Matrix Structure:
+=========================
+📂 Category: School
+  🎯 Priority 7: 1 task(s)
+    [1] Viết báo cáo nhóm
+📂 Category: Work
+  🎯 Priority 9: 1 task(s)
+    [2] Chuẩn bị bài thuyết trình
+
+📈 Matrix Statistics:
+  📊 Total tasks: 2
+  📂 Categories: 2
+
+🚀 TaskTracker> status 1 Cancelled
+📝 Task 1 status updated to Cancelled
+
+🚀 TaskTracker> status 2 InProgress
+📝 Task 2 status updated to In Progress
+
+🚀 TaskTracker> save demo.json
+💾 Saving tasks to demo.json...
+✅ Tasks saved successfully to demo.json
+📊 Total tasks saved: 2
+
+🚀 TaskTracker> view demo.json
+👁️ Viewing JSON file: demo.json...
+
+📊 File Information:
+┌─────────────┬────────────────────────────┐
+│ Property    │ Value                      │
+├─────────────┼────────────────────────────┤
+│ Version     │ 1.0                        │
+│ Next ID     │ 3                          │
+│ File Size   │ 667 bytes                  │
+└─────────────┴────────────────────────────┘
+
+📋 Tasks (2 total):
+┌────┬─────────────────────┬─────────────┬─────────────┬──────────┬─────────────────────┐
+│ ID │ Title               │ Status      │ Category    │ Priority │ Created At          │
+├────┼─────────────────────┼─────────────┼─────────────┼──────────┼─────────────────────┤
+│  1 │ Viết báo cáo...     │ Cancelled   │ School      │        7 │ 2025-07-02T23:12:47 │
+│  2 │ Chuẩn bị bà...      │ In Progress │ Work        │        9 │ 2025-07-02T23:12:52 │
+└────┴─────────────────────┴─────────────┴─────────────┴──────────┴─────────────────────┘
+
+� Use 'stats' command to view detailed task statistics
+
+🚀 TaskTracker> stats
+
+📊 Task Statistics
+══════════════════
+📋 Total Tasks:     2
+✅ Completed:       0
+⏳ Pending:         0
+🚧 In Progress:     1
+📈 Completion Rate: 0.0%
+
+🚀 TaskTracker> sort priority
+📊 Tasks sorted by priority (highest first):
+  [2] Chuẩn bị bài thuyết trình - Priority: 9
+  [1] Viết báo cáo nhóm - Priority: 7
+
+🚀 TaskTracker> sort title
+📊 Tasks sorted alphabetically:
+  [2] Chuẩn bị bài thuyết trình
+  [1] Viết báo cáo nhóm
+
+🚀 TaskTracker> sort created
+📊 Tasks sorted by creation date (newest first):
+  [2] Chuẩn bị bài thuyết trình - Age: 0.1 hours
+  [1] Viết báo cáo nhóm - Age: 0.1 hours
+
+🚀 TaskTracker> remove 1
+🗑️ Task 1 removed successfully!
+
+🚀 TaskTracker> list
+=== Task List (1 tasks) ===
+[2] Chuẩn bị bài thuyết trình - In Progress (Priority: 9, Category: Work)
+Completion Rate: 0.0%
+
+🚀 TaskTracker> save tasks.json
+💾 Saving tasks to tasks.json...
+✅ Tasks saved successfully to tasks.json
+📊 Total tasks saved: 1
+
+🚀 TaskTracker> remove 2
+🗑️ Task 2 removed successfully!
+
+🚀 TaskTracker> load tasks.json
+📂 Loading tasks from tasks.json...
+✅ Tasks loaded successfully from tasks.json
+📊 Total tasks loaded: 1
+� Use 'stats' command to view detailed task statistics
+
+🚀 TaskTracker> recent
+🕐 Recent Commands:
+==================
+  1. stats
+  2. sort
+  3. sort
+  4. sort
+  5. remove
+  6. list
+  7. save
+  8. remove
+  9. load
+  10. recent
+
+🚀 TaskTracker> exit
+
+👋 Thank you for using Task Tracker! Have a productive day!
+```
+---
 ## 📚 Learning Resources
 
 ### C++23 Documentation
@@ -526,21 +536,11 @@ Type Safety: Concepts + strong typing
 - [ISO C++23 Standard](https://isocpp.org/std/the-standard)
 - [GCC C++23 Support](https://gcc.gnu.org/projects/cxx-status.html)
 - [Clang C++23 Support](https://clang.llvm.org/cxx_status.html)
+- [C++ Weekly C++23](https://www.youtube.com/playlist?list=PLs3KjaCtOwSYyEh4AoprFYz_3PpNhM2YR)
 
 ### Best Practices
 - [Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/)
 - [Modern C++ Features](https://github.com/AnthonyCalandra/modern-cpp-features)
 - [Awesome Modern C++](https://github.com/rigtorp/awesome-modern-cpp)
 
----
-
-**Tác giả**: C++23 Techniques Showcase Project  
-**Phiên bản**: 3.0.0  
-**License**: MIT  
-**Ngày cập nhật**: July 2, 2025
-
----
-
-> 💡 **Lưu ý**: Ứng dụng này được thiết kế để minh họa **16+ kỹ thuật C++23** trong môi trường thực tế. Với sự tập trung vào **deducing this**, **std::flat_map**, **std::expected**, và các features tiên tiến khác, code được optimize cho Clang 17+ và GCC 13+. Đây là một **comprehensive showcase** của modern C++ capabilities với real-world applications.
-
-> 🚀 **Kết quả**: Thành công triển khai **100% C++23 features** được target, zero legacy code, type-safe architecture, và performance-optimized implementation. Perfect cho việc học tập và reference cho C++23 projects.
+> 💡 **Lưu ý**: Ứng dụng này được thiết kế để minh họa **10 kỹ thuật C++23** trong môi trường thực tế. Code được tối cho Clang 17+ và GCC 14+.

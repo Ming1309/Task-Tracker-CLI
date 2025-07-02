@@ -101,26 +101,26 @@ TaskResult Task::setCategory(const std::string& category) {
  * @details Uses C++23 std::format for string formatting
  */
 std::string Task::to_string() const {
-    // C++23 std::format usage (ready to migrate to std::print when available)
+    // C++23 std::format and std::print usage
     auto created_time = std::chrono::system_clock::to_time_t(_metadata.created_at);
     auto updated_time = std::chrono::system_clock::to_time_t(_metadata.updated_at);
     
     std::ostringstream oss;
-    oss << std::format("Task [ID: {}]\n", _id);
-    oss << std::format("  Title: {}\n", _title);
-    oss << std::format("  Description: {}\n", _description.empty() ? "None" : _description);
-    oss << std::format("  Status: {}\n", taskStatusToString(_status));
-    oss << std::format("  Category: {}\n", _metadata.category);
-    oss << std::format("  Priority: {}\n", _metadata.priority);
-    oss << std::format("  Created: {:%Y-%m-%d %H:%M:%S}\n", std::chrono::system_clock::from_time_t(created_time));
-    oss << std::format("  Updated: {:%Y-%m-%d %H:%M:%S}\n", std::chrono::system_clock::from_time_t(updated_time));
+    std::string task_info = std::format("Task [ID: {}]\n", _id);
+    task_info += std::format("  Title: {}\n", _title);
+    task_info += std::format("  Description: {}\n", _description.empty() ? "None" : _description);
+    task_info += std::format("  Status: {}\n", taskStatusToString(_status));
+    task_info += std::format("  Category: {}\n", _metadata.category);
+    task_info += std::format("  Priority: {}\n", _metadata.priority);
+    task_info += std::format("  Created: {:%Y-%m-%d %H:%M:%S}\n", std::chrono::system_clock::from_time_t(created_time));
+    task_info += std::format("  Updated: {:%Y-%m-%d %H:%M:%S}\n", std::chrono::system_clock::from_time_t(updated_time));
     
     if (_metadata.completed_at.has_value()) {
         auto completed_time = std::chrono::system_clock::to_time_t(*_metadata.completed_at);
-        oss << std::format("  Completed: {:%Y-%m-%d %H:%M:%S}\n", std::chrono::system_clock::from_time_t(completed_time));
+        task_info += std::format("  Completed: {:%Y-%m-%d %H:%M:%S}\n", std::chrono::system_clock::from_time_t(completed_time));
     }
     
-    return oss.str();
+    return task_info;
 }
 
 /**
@@ -149,67 +149,6 @@ void Task::markCompleted() {
 
 // TaskManager implementation moved to task_manager.cpp
 
-/**
- * @brief Demo function to showcase C++23 features
- * @details Creates and manipulates tasks using modern C++23 features
- */
-void demonstrateC23Features() {
-    std::cout << "\n🎯 Demonstrating C++23 Features:\n";
-    std::cout << "================================\n";
-    
-    // 1. Enhanced enum classes
-    TaskStatus status = TaskStatus::InProgress;
-    std::cout << "1. Enhanced Enum: " << taskStatusToString(status) << "\n";
-    
-    // 2. std::expected (simulated)
-    TaskManager manager;
-    auto result = manager.addTask("Demo Task", "Showcasing C++23 features");
-    if (result) {
-        std::cout << "2. std::expected: Task added successfully\n";
-    }
-    
-    // 3. Concepts demonstration
-    auto checkTaskLike = []<TaskLike T>(const T& t) {
-        return t.getId() > 0;
-    };
-    
-    if (auto task_result = manager.getTask(1); task_result) {
-        std::cout << "3. Concepts: Task validation passed\n";
-        
-        // 4. Ranges and views
-        auto pending_tasks = manager.getTasksByStatus(TaskStatus::Pending);
-        std::cout << "4. Ranges: Found " << std::distance(pending_tasks.begin(), pending_tasks.end()) << " pending task(s)\n";
-        
-        // 5. Enhanced lambdas with template parameters
-        auto sorter = []<typename T>(std::vector<T>& vec) requires std::sortable<typename std::vector<T>::iterator> {
-            std::ranges::sort(vec);
-        };
-        
-        std::vector<int> test_vec{3, 1, 4, 1, 5};
-        sorter(test_vec);
-        std::cout << "5. Template Lambdas: Vector sorted\n";
-        
-        // 6. std::format (C++23)
-        std::cout << std::format("6. std::format (C++23): Task ID = {}\n", task_result->getId());
-        
-        // 7. Structured bindings
-        const auto& [created, updated, completed, category, priority] = task_result->getMetadata().tie();
-        std::cout << "7. Structured Bindings: Task category = " << category << "\n";
-        
-        // 8. Comparison operators
-        Task another_task(2, "Another Task");
-        bool are_equal = (*task_result == another_task);
-        std::cout << "8. Spaceship Operator: Tasks equal = " << std::boolalpha << are_equal << "\n";
-        
-        // 9. Designated initializers (already shown in Command struct)
-        std::cout << "9. Designated Initializers: Used in Command struct initialization\n";
-        
-        // 10. Modern getter methods
-        std::cout << "10. Modern Getters: Task title = '" << task_result->getTitle() << "'\n";
-    }
-    
-    std::cout << "\n✨ All C++23 features demonstrated successfully!\n\n";
-}
 
 /**
  * @brief Convert JSON error enum to string
@@ -474,7 +413,7 @@ std::string taskStatusToString(TaskStatus status) {
  */
 std::optional<TaskStatus> stringToTaskStatus(const std::string& str) {
     if (str == "pending" || str == "Pending") return TaskStatus::Pending;
-    if (str == "progress" || str == "in-progress" || str == "In Progress") return TaskStatus::InProgress;
+    if (str == "progress" || str == "in-progress" || str == "In Progress" || str == "InProgress") return TaskStatus::InProgress;
     if (str == "completed" || str == "Completed") return TaskStatus::Completed;
     if (str == "cancelled" || str == "Cancelled") return TaskStatus::Cancelled;
     return std::nullopt;

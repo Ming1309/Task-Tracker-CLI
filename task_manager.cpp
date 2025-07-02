@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <format>
+#include <print>
 
 TaskAddResult TaskManager::addTask(const std::string& title, const std::string& description) {
     if (title.empty()) {
@@ -80,20 +81,20 @@ double TaskManager::getCompletionRate() const {
 
 void TaskManager::listTasks() const {
     if (_tasks.empty()) {
-        std::cout << "No tasks available.\n";
+        std::print("No tasks available.\n");
         return;
     }
     
-    std::cout << std::format("=== Task List ({} tasks) ===\n", _tasks.size());
+    std::print("=== Task List ({} tasks) ===\n", _tasks.size());
     for (const auto& task : _tasks) {
-        std::cout << std::format("[{}] {} - {} (Priority: {}, Category: {})\n",
+        std::print("[{}] {} - {} (Priority: {}, Category: {})\n",
                     task.getId(),
                     task.getTitle(),
                     taskStatusToString(task.getStatus()),
                     task.getMetadata().priority,
                     task.getMetadata().category);
     }
-    std::cout << std::format("Completion Rate: {:.1f}%\n", getCompletionRate());
+    std::print("Completion Rate: {:.1f}%\n", getCompletionRate());
 }
 
 void TaskManager::listTasksByStatus(TaskStatus status) const {
@@ -101,15 +102,15 @@ void TaskManager::listTasksByStatus(TaskStatus status) const {
     auto task_vector = std::vector<Task>(filtered_tasks.begin(), filtered_tasks.end());
     
     if (task_vector.empty()) {
-        std::cout << std::format("No tasks with status: {}\n", taskStatusToString(status));
+        std::print("No tasks with status: {}\n", taskStatusToString(status));
         return;
     }
     
-    std::cout << std::format("=== {} Tasks ({} tasks) ===\n", 
+    std::print("=== {} Tasks ({} tasks) ===\n", 
                 taskStatusToString(status), task_vector.size());
     
     for (const auto& task : task_vector) {
-        std::cout << std::format("[{}] {} (Priority: {}, Category: {})\n",
+        std::print("[{}] {} (Priority: {}, Category: {})\n",
                     task.getId(),
                     task.getTitle(),
                     taskStatusToString(task.getStatus()),
