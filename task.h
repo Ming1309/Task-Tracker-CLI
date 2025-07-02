@@ -40,7 +40,8 @@ enum class TaskError {
     TaskNotFound,
     InvalidStatus,
     EmptyTitle,
-    DuplicateTask
+    DuplicateTask,
+    InvalidPriority
 };
 
 // JSON serialization error handling

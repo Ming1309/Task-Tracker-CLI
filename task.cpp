@@ -40,6 +40,11 @@ TaskResult Task::setStatus(TaskStatus status) {
 }
 
 TaskResult Task::setPriority(int priority) {
+    // Validate priority range (0-10)
+    if (priority < 0 || priority > 10) {
+        return std::unexpected(TaskError::InvalidPriority);
+    }
+    
     _metadata.priority = priority;
     _metadata.updated_at = std::chrono::system_clock::now();
     return true;
@@ -274,7 +279,7 @@ std::string escapeJsonString(const std::string& str) {
     std::string escaped;
     escaped.reserve(str.size() + 20); // Reserve some extra space for escapes
     
-    for (char c : str) {
+    for (unsigned char c : str) {
         switch (c) {
             case '"': escaped += "\\\""; break;
             case '\\': escaped += "\\\\"; break;
@@ -284,10 +289,12 @@ std::string escapeJsonString(const std::string& str) {
             case '\r': escaped += "\\r"; break;
             case '\t': escaped += "\\t"; break;
             default:
+                // Only escape actual control characters (0-31), not UTF-8 bytes
                 if (c < 32) {
-                    escaped += std::format("\\u{:04x}", static_cast<unsigned char>(c));
+                    escaped += std::format("\\u{:04x}", c);
                 } else {
-                    escaped += c;
+                    // For UTF-8 and normal ASCII (32-255), keep as-is
+                    escaped += static_cast<char>(c);
                 }
                 break;
         }
@@ -655,6 +662,7 @@ std::string taskErrorToString(TaskError error) {
         case TaskError::InvalidStatus: return "Invalid task status";
         case TaskError::EmptyTitle: return "Task title cannot be empty";
         case TaskError::DuplicateTask: return "Task with this title already exists";
+        case TaskError::InvalidPriority: return "Priority must be between 0 and 10";
         default: return "Unknown error";
     }
 }
