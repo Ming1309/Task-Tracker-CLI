@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['hướng_20dẫn_20build_0',['🔧 Hướng Dẫn Build',['../index.html#autotoc_md3',1,'']]],
+  ['hướng_20dẫn_20sử_20dụng_1',['📋 Hướng Dẫn Sử Dụng',['../index.html#autotoc_md6',1,'']]],
+  ['hệ_20thống_2',['Yêu Cầu Hệ Thống',['../index.html#autotoc_md4',1,'']]],
+  ['handleadd_3',['handleAdd',['../classApp.html#a9ad91bda5a461ac92934d408feb514ce',1,'App']]],
+  ['handlecategory_4',['handleCategory',['../classApp.html#a7b49b2af8d6c2526071aecbf295a8b0f',1,'App']]],
+  ['handlecomplete_5',['handleComplete',['../classApp.html#a656670235bfe32f9dd0f8841146bcbd0',1,'App']]],
+  ['handleerror_6',['handleError',['../classApp.html#a208ffadfd8124311ee30bc0f3c5bf6dd',1,'App']]],
+  ['handleexit_7',['handleExit',['../classApp.html#ab759424153c6df7f6703f05689471641',1,'App']]],
+  ['handlefind_8',['handleFind',['../classApp.html#a429f2a5f9b1d42f222370fe5d9127bb4',1,'App']]],
+  ['handleget_9',['handleGet',['../classApp.html#a4bd74aa8aa7f15d2092811a0575825dd',1,'App']]],
+  ['handlejsonerror_10',['handleJsonError',['../classApp.html#ada3df8cb8dd2336069237847607e5ad0',1,'App']]],
+  ['handlelist_11',['handleList',['../classApp.html#ada94968b41c9f60a50fe78fb916f18e8',1,'App']]],
+  ['handleload_12',['handleLoad',['../classApp.html#a70c895bce083dfb67ff963a8f87364af',1,'App']]],
+  ['handlematrix_13',['handleMatrix',['../classApp.html#ab019d46993e82ba917a6ef7d891ea8de',1,'App']]],
+  ['handlepriority_14',['handlePriority',['../classApp.html#a3849488c6b45c67a55040fcfcc6b629f',1,'App']]],
+  ['handler_15',['handler',['../structApp_1_1Command.html#aa6cbbf3a5193e3fe8f855eefac18b79e',1,'App::Command']]],
+  ['handlerecent_16',['handleRecent',['../classApp.html#a4f6f6c6ac0893ee6b47cc084ad9661dd',1,'App']]],
+  ['handleremove_17',['handleRemove',['../classApp.html#a3de851ac9822e881927f631061909d17',1,'App']]],
+  ['handlesave_18',['handleSave',['../classApp.html#a82e5b09040044b3fa8587f4f40652a34',1,'App']]],
+  ['handlesort_19',['handleSort',['../classApp.html#a77a1226345edac848b1efda7e7e40266',1,'App']]],
+  ['handlestats_20',['handleStats',['../classApp.html#aab7687d9cf1514255ddab7bc9a4e1da2',1,'App']]],
+  ['handlestatus_21',['handleStatus',['../classApp.html#a61f4762b3374762880a54dac399db4dd',1,'App']]],
+  ['handleview_22',['handleView',['../classApp.html#a1cef5fcd70ec6ec63d6e3df3cd0782a0',1,'App']]],
+  ['hascategory_23',['hasCategory',['../classTaskMatrix.html#a5eb3ba979efc6a928f20e349195bf3b3',1,'TaskMatrix']]]
+];

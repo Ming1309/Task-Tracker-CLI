@@ -2,6 +2,12 @@
 
 Một ứng dụng quản lý công việc được phát triển để minh họa và áp dụng các tính năng mới nhất của C++23. Dự án này tập trung vào việc sử dụng thực tế các kỹ thuật hiện đại để xây dựng một ứng dụng CLI hoàn chỉnh và hiệu quả.
 
+## 👨‍🎓 Thông tin sinh viên
+| Thông tin | Nội dung |
+|-----------|---------|
+| **Họ và tên** | Phạm Quang Minh |
+| **MSSV** | 23120298 |
+
 ## 🚀 Tổng Quan Ứng Dụng
 
 Task Tracker CLI là một ứng dụng dòng lệnh cho phép người dùng:

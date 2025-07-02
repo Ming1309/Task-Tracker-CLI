@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['getage_0',['getAge',['../classTask.html#a49a510c4d417765c8e8db0d7b2b6bbc7',1,'Task']]],
+  ['getalltasks_1',['getAllTasks',['../classTaskManager.html#a9447a6e58fefa5a7cec5a06ba4648593',1,'TaskManager']]],
+  ['getcategories_2',['getCategories',['../classTaskMatrix.html#ab3c2ceb006ab7526fed0d0d786622bdd',1,'TaskMatrix']]],
+  ['getcompletedtaskscount_3',['getCompletedTasksCount',['../classTaskManager.html#a0ddd86911af7179d130d0f2db9407b8a',1,'TaskManager']]],
+  ['getcompletionrate_4',['getCompletionRate',['../classTaskManager.html#aef2e7935cb8ccf19a3415b809a89c733',1,'TaskManager']]],
+  ['getdescription_5',['getDescription',['../classTask.html#af02bcb0bc3d1927928826ee97d91fbe6',1,'Task']]],
+  ['getid_6',['getId',['../classTask.html#a5443c55f62a2500813da4c165b6ca4dc',1,'Task']]],
+  ['getmetadata_7',['getMetadata',['../classTask.html#a51eb8117b95254234080b76274dd90b4',1,'Task']]],
+  ['getpendingtaskscount_8',['getPendingTasksCount',['../classTaskManager.html#a4e73835d292d22a1d7faeb5451e9f0b8',1,'TaskManager']]],
+  ['getpriorities_9',['getPriorities',['../classTaskMatrix.html#abd86de694b620cc0c7291a86b2086d95',1,'TaskMatrix']]],
+  ['getsortedtasks_10',['getSortedTasks',['../classTaskManager.html#a9d73d4ad9a88ec746344f147d86a3a67',1,'TaskManager']]],
+  ['getstatus_11',['getStatus',['../classTask.html#ac54502e17394520be0709a29dca2831d',1,'Task']]],
+  ['gettask_12',['getTask',['../classTaskManager.html#a793f448ba794a04e9f4c047983910966',1,'TaskManager']]],
+  ['gettaskbyindex_13',['getTaskByIndex',['../classTaskManager.html#aef04cc89765c94eef9d5c7b6c21024e9',1,'TaskManager']]],
+  ['gettaskcount_14',['getTaskCount',['../classTaskManager.html#a4e1c9494d08ab3baa6188e4dea9e1cb8',1,'TaskManager::getTaskCount()'],['../classTaskMatrix.html#a6ad5e31b000b843cfd0dcc51429db9b8',1,'TaskMatrix::getTaskCount()']]],
+  ['gettasksbypriority_15',['getTasksByPriority',['../classTaskManager.html#ac00ff095c78767940fdad00ac593b417',1,'TaskManager']]],
+  ['gettasksbystatus_16',['getTasksByStatus',['../classTaskManager.html#a957eb3b52fd09063e7b74697e00800e9',1,'TaskManager']]],
+  ['gettaskstatusstring_17',['getTaskStatusString',['../task_8h.html#a6711e2b9d94189ff93cf8853a9b2b35d',1,'task.h']]],
+  ['gettitle_18',['getTitle',['../classTask.html#a4d1400b450933df59dab62f3f5ca391f',1,'Task']]],
+  ['gettotaltaskcount_19',['getTotalTaskCount',['../classTaskMatrix.html#af679dff4597c96915042d8cb2013f5aa',1,'TaskMatrix']]]
+];

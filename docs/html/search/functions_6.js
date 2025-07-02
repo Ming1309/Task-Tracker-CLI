@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['handleadd_0',['handleAdd',['../classApp.html#a9ad91bda5a461ac92934d408feb514ce',1,'App']]],
+  ['handlecategory_1',['handleCategory',['../classApp.html#a7b49b2af8d6c2526071aecbf295a8b0f',1,'App']]],
+  ['handlecomplete_2',['handleComplete',['../classApp.html#a656670235bfe32f9dd0f8841146bcbd0',1,'App']]],
+  ['handleerror_3',['handleError',['../classApp.html#a208ffadfd8124311ee30bc0f3c5bf6dd',1,'App']]],
+  ['handleexit_4',['handleExit',['../classApp.html#ab759424153c6df7f6703f05689471641',1,'App']]],
+  ['handlefind_5',['handleFind',['../classApp.html#a429f2a5f9b1d42f222370fe5d9127bb4',1,'App']]],
+  ['handleget_6',['handleGet',['../classApp.html#a4bd74aa8aa7f15d2092811a0575825dd',1,'App']]],
+  ['handlejsonerror_7',['handleJsonError',['../classApp.html#ada3df8cb8dd2336069237847607e5ad0',1,'App']]],
+  ['handlelist_8',['handleList',['../classApp.html#ada94968b41c9f60a50fe78fb916f18e8',1,'App']]],
+  ['handleload_9',['handleLoad',['../classApp.html#a70c895bce083dfb67ff963a8f87364af',1,'App']]],
+  ['handlematrix_10',['handleMatrix',['../classApp.html#ab019d46993e82ba917a6ef7d891ea8de',1,'App']]],
+  ['handlepriority_11',['handlePriority',['../classApp.html#a3849488c6b45c67a55040fcfcc6b629f',1,'App']]],
+  ['handlerecent_12',['handleRecent',['../classApp.html#a4f6f6c6ac0893ee6b47cc084ad9661dd',1,'App']]],
+  ['handleremove_13',['handleRemove',['../classApp.html#a3de851ac9822e881927f631061909d17',1,'App']]],
+  ['handlesave_14',['handleSave',['../classApp.html#a82e5b09040044b3fa8587f4f40652a34',1,'App']]],
+  ['handlesort_15',['handleSort',['../classApp.html#a77a1226345edac848b1efda7e7e40266',1,'App']]],
+  ['handlestats_16',['handleStats',['../classApp.html#aab7687d9cf1514255ddab7bc9a4e1da2',1,'App']]],
+  ['handlestatus_17',['handleStatus',['../classApp.html#a61f4762b3374762880a54dac399db4dd',1,'App']]],
+  ['handleview_18',['handleView',['../classApp.html#a1cef5fcd70ec6ec63d6e3df3cd0782a0',1,'App']]],
+  ['hascategory_19',['hasCategory',['../classTaskMatrix.html#a5eb3ba979efc6a928f20e349195bf3b3',1,'TaskMatrix']]]
+];

@@ -1,0 +1,27 @@
+var classTask =
+[
+    [ "Task", "classTask.html#a488ef01a288ba748341e9b8afe62948e", null ],
+    [ "fromJson", "classTask.html#abb6c8b8471e1dfbfe619b16642e661ad", null ],
+    [ "getAge", "classTask.html#a49a510c4d417765c8e8db0d7b2b6bbc7", null ],
+    [ "getDescription", "classTask.html#af02bcb0bc3d1927928826ee97d91fbe6", null ],
+    [ "getId", "classTask.html#a5443c55f62a2500813da4c165b6ca4dc", null ],
+    [ "getMetadata", "classTask.html#a51eb8117b95254234080b76274dd90b4", null ],
+    [ "getStatus", "classTask.html#ac54502e17394520be0709a29dca2831d", null ],
+    [ "getTitle", "classTask.html#a4d1400b450933df59dab62f3f5ca391f", null ],
+    [ "isCompleted", "classTask.html#ad092b5e32ca30e6089f08bdb4e1ff658", null ],
+    [ "markCompleted", "classTask.html#ad6d254620a609cf634ae0c46ee59148f", null ],
+    [ "operator<", "classTask.html#ab43903e28377ea13be4f9c2bc7734c82", null ],
+    [ "operator==", "classTask.html#adda87005cd889084c71f5cbb0a6a5986", null ],
+    [ "setCategory", "classTask.html#a43ab0b5e7a8364dff38635501a1d8be5", null ],
+    [ "setDescription", "classTask.html#a2ed6e74abd825bd52edff97036d6ff24", null ],
+    [ "setPriority", "classTask.html#aa232a5fa345a8a5acc6ece206433d268", null ],
+    [ "setStatus", "classTask.html#adf901eabe9642fb12f0f979b1bd911d2", null ],
+    [ "setTitle", "classTask.html#a4963ea50aeac039e25c964494764e67a", null ],
+    [ "to_string", "classTask.html#ad1d93fad2fc923fc681e4c713bfd1924", null ],
+    [ "toJson", "classTask.html#aa926fe67ef7cd61c4681c8705364d1f5", null ],
+    [ "_description", "classTask.html#af60a565f0fef63e538dd8b00c84b771e", null ],
+    [ "_id", "classTask.html#a8909ff1653cd9a685af7256976e4e334", null ],
+    [ "_metadata", "classTask.html#a19318c390c1ef56e9e720f54d0a1599b", null ],
+    [ "_status", "classTask.html#acd3b2bf267b84f05be033a04f31c7185", null ],
+    [ "_title", "classTask.html#a73c568cd50b7985ef8f4f479928aa82f", null ]
+];
